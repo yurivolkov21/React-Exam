@@ -1,18 +1,23 @@
-import { cn } from "@/lib/utils"
-import { Button } from "@/components/ui/button"
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 import {
   Field,
   FieldDescription,
   FieldGroup,
   FieldLabel,
   FieldSeparator,
-} from "@/components/ui/field"
-import { Input } from "@/components/ui/input"
+} from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
+
+type SignupFormProps = React.ComponentProps<"form"> & {
+  onSwitchToLogin?: () => void;
+};
 
 export function SignupForm({
   className,
+  onSwitchToLogin,
   ...props
-}: React.ComponentProps<"form">) {
+}: SignupFormProps) {
   return (
     <form className={cn("flex flex-col gap-6", className)} {...props}>
       <FieldGroup>
@@ -26,6 +31,7 @@ export function SignupForm({
           <FieldLabel htmlFor="name">Full Name</FieldLabel>
           <Input
             id="name"
+            name="name"
             type="text"
             placeholder="John Doe"
             required
@@ -36,6 +42,7 @@ export function SignupForm({
           <FieldLabel htmlFor="email">Email</FieldLabel>
           <Input
             id="email"
+            name="email"
             type="email"
             placeholder="m@example.com"
             required
@@ -50,6 +57,7 @@ export function SignupForm({
           <FieldLabel htmlFor="password">Password</FieldLabel>
           <Input
             id="password"
+            name="password"
             type="password"
             required
             className="bg-background"
@@ -62,6 +70,7 @@ export function SignupForm({
           <FieldLabel htmlFor="confirm-password">Confirm Password</FieldLabel>
           <Input
             id="confirm-password"
+            name="confirmPassword"
             type="password"
             required
             className="bg-background"
@@ -83,10 +92,17 @@ export function SignupForm({
             Sign up with GitHub
           </Button>
           <FieldDescription className="px-6 text-center">
-            Already have an account? <a href="#">Sign in</a>
+            Already have an account?{" "}
+            <button
+              type="button"
+              onClick={onSwitchToLogin}
+              className="underline underline-offset-4"
+            >
+              Sign in
+            </button>
           </FieldDescription>
         </Field>
       </FieldGroup>
     </form>
-  )
+  );
 }

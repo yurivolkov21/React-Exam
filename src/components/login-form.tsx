@@ -1,18 +1,23 @@
-import { cn } from "@/lib/utils"
-import { Button } from "@/components/ui/button"
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 import {
   Field,
   FieldDescription,
   FieldGroup,
   FieldLabel,
   FieldSeparator,
-} from "@/components/ui/field"
-import { Input } from "@/components/ui/input"
+} from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
+
+type LoginFormProps = React.ComponentProps<"form"> & {
+  onSwitchToSignup?: () => void;
+};
 
 export function LoginForm({
   className,
+  onSwitchToSignup,
   ...props
-}: React.ComponentProps<"form">) {
+}: LoginFormProps) {
   return (
     <form className={cn("flex flex-col gap-6", className)} {...props}>
       <FieldGroup>
@@ -26,6 +31,7 @@ export function LoginForm({
           <FieldLabel htmlFor="email">Email</FieldLabel>
           <Input
             id="email"
+            name="email"
             type="email"
             placeholder="m@example.com"
             required
@@ -44,6 +50,7 @@ export function LoginForm({
           </div>
           <Input
             id="password"
+            name="password"
             type="password"
             required
             className="bg-background"
@@ -65,12 +72,16 @@ export function LoginForm({
           </Button>
           <FieldDescription className="text-center">
             Don&apos;t have an account?{" "}
-            <a href="#" className="underline underline-offset-4">
+            <button
+              type="button"
+              onClick={onSwitchToSignup}
+              className="underline underline-offset-4"
+            >
               Sign up
-            </a>
+            </button>
           </FieldDescription>
         </Field>
       </FieldGroup>
     </form>
-  )
+  );
 }
