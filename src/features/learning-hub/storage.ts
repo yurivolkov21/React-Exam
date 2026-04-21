@@ -1,4 +1,9 @@
-import { NOTES_SEED, STORAGE_KEYS } from "./constants";
+import {
+  ENABLE_TASKS_SEED_DEMO,
+  NOTES_SEED,
+  STORAGE_KEYS,
+  TASKS_SEED,
+} from "./constants";
 import { getId } from "./helpers";
 import type {
   NotesHydrationResult,
@@ -70,10 +75,45 @@ const buildSeedNotes = (): StudyNote[] =>
     updatedAt: new Date().toISOString(),
   }));
 
+const buildDueDate = (dueInDays: number): string => {
+  const dueDate = new Date();
+  dueDate.setDate(dueDate.getDate() + dueInDays);
+  return dueDate.toISOString().slice(0, 10);
+};
+
+const buildIsoDaysAgo = (daysAgo: number): string => {
+  const date = new Date();
+  date.setDate(date.getDate() - daysAgo);
+  return date.toISOString();
+};
+
+const buildSeedTasks = (): StudyTask[] => {
+  const now = new Date().toISOString();
+
+  return TASKS_SEED.map((task) => {
+    const completedDaysAgo = task.completedDaysAgo ?? 0;
+    const completedAt = buildIsoDaysAgo(completedDaysAgo);
+    const createdAt = task.kanbanStatus === "done" ? completedAt : now;
+    const updatedAt = task.kanbanStatus === "done" ? completedAt : now;
+
+    return {
+      id: getId(),
+      title: task.title,
+      subject: task.subject,
+      priority: task.priority,
+      dueDate: buildDueDate(task.dueInDays),
+      completed: task.kanbanStatus === "done",
+      kanbanStatus: task.kanbanStatus,
+      createdAt,
+      updatedAt,
+    };
+  });
+};
+
 export const readStoredTasks = (userEmail: string): StudyTask[] => {
   const rawValue = localStorage.getItem(getTaskStorageKey(userEmail));
-  if (!rawValue) {
-    return [];
+  if (rawValue === null) {
+    return ENABLE_TASKS_SEED_DEMO ? buildSeedTasks() : [];
   }
 
   try {

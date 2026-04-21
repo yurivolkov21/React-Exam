@@ -37,7 +37,7 @@ export function ProgressRing({
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
-        gap: 16,
+        gap: 0,
       }}
     >
       <div style={{ position: "relative", width: size, height: size }}>
@@ -74,40 +74,46 @@ export function ProgressRing({
             gap: 2,
           }}
         >
-          <span
-            style={{
-              fontFamily: "var(--lh-font-display)",
-              fontSize: 44,
-              fontWeight: 500,
-              lineHeight: 1,
-              color: "var(--lh-ink)",
-              letterSpacing: "-0.04em",
-            }}
-          >
-            {percent}
-          </span>
+          <div style={{ display: "flex", alignItems: "baseline", gap: 0 }}>
+            <span
+              style={{
+                fontFamily: "var(--lh-font-display)",
+                fontSize: 44,
+                fontWeight: 500,
+                lineHeight: 1,
+                color: "var(--lh-ink)",
+                letterSpacing: "-0.04em",
+              }}
+            >
+              {percent}
+            </span>
+            <span
+              style={{
+                fontFamily: "var(--lh-font-sans)",
+                fontSize: 28,
+                fontWeight: 500,
+                lineHeight: 1,
+                color: "var(--lh-ink)",
+              }}
+            >
+              %
+            </span>
+          </div>
+
           <span
             style={{
               fontSize: 11.5,
               fontWeight: 500,
               color: "var(--lh-muted)",
               textTransform: "uppercase",
-              letterSpacing: "0.06em",
+              letterSpacing: "0.08em",
+              marginTop: 3,
             }}
           >
-            %
+            {label}
           </span>
         </div>
       </div>
-      <span
-        style={{
-          fontSize: 12.5,
-          color: "var(--lh-muted)",
-          fontWeight: 500,
-        }}
-      >
-        {label}
-      </span>
     </div>
   );
 }

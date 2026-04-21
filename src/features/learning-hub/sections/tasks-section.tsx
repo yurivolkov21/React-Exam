@@ -45,6 +45,7 @@ export function TasksSection({
   filteredTasks,
   onTaskSearchChange,
   onStartEditTask,
+  onToggleTask,
   onDeleteTask,
   onMoveTask,
   onOpenNewTask,
@@ -212,24 +213,30 @@ export function TasksSection({
             status="pending"
             tasks={pendingTasks}
             onEdit={onStartEditTask}
+            onToggle={onToggleTask}
             onDelete={onDeleteTask}
             onDrop={handleDrop}
+            onAddTask={onOpenNewTask}
           />
           <KanbanColumn
             title="In Progress"
             status="in-progress"
             tasks={inProgressTasks}
             onEdit={onStartEditTask}
+            onToggle={onToggleTask}
             onDelete={onDeleteTask}
             onDrop={handleDrop}
+            onAddTask={onOpenNewTask}
           />
           <KanbanColumn
             title="Done"
             status="done"
             tasks={doneTasks}
             onEdit={onStartEditTask}
+            onToggle={onToggleTask}
             onDelete={onDeleteTask}
             onDrop={handleDrop}
+            onAddTask={onOpenNewTask}
           />
         </div>
       )}

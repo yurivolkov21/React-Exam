@@ -1,9 +1,11 @@
 import { useState } from "react";
+import { CheckIcon, CalendarIcon, PencilIcon, Trash2Icon } from "lucide-react";
 import type { StudyTask, TaskPriority } from "../types";
 
 interface KanbanCardProps {
   task: StudyTask;
   onEdit: (task: StudyTask) => void;
+  onToggle: (id: string) => void;
   onDelete: (id: string) => void;
   onDragStart: (e: React.DragEvent, taskId: string) => void;
 }
@@ -24,20 +26,14 @@ const PRIORITY_CONFIG: Record<TaskPriority, { color: string; bg: string; border:
 
 function formatDueDate(dateStr: string): { label: string; isOverdue: boolean; isToday: boolean } {
   if (!dateStr) return { label: "No due date", isOverdue: false, isToday: false };
-  const due = new Date(dateStr);
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  due.setHours(0, 0, 0, 0);
-  const diff = due.getTime() - today.getTime();
-  const days = Math.round(diff / 86400000);
+  const todayStr = new Date().toISOString().slice(0, 10);
 
-  if (days < 0) return { label: `${Math.abs(days)}d overdue`, isOverdue: true, isToday: false };
-  if (days === 0) return { label: "Due today", isOverdue: false, isToday: true };
-  if (days === 1) return { label: "Due tomorrow", isOverdue: false, isToday: false };
-  return { label: `Due in ${days}d`, isOverdue: false, isToday: false };
+  if (dateStr === todayStr) return { label: "Due today", isOverdue: false, isToday: true };
+  if (dateStr < todayStr) return { label: `Overdue · ${dateStr}`, isOverdue: true, isToday: false };
+  return { label: `Due ${dateStr}`, isOverdue: false, isToday: false };
 }
 
-export function KanbanCard({ task, onEdit, onDelete, onDragStart }: KanbanCardProps) {
+export function KanbanCard({ task, onEdit, onToggle, onDelete, onDragStart }: KanbanCardProps) {
   const [isDragging, setIsDragging] = useState(false);
   const [showActions, setShowActions] = useState(false);
   const subjectColor = SUBJECT_COLORS[task.subject] ?? "var(--lh-muted)";
@@ -49,6 +45,7 @@ export function KanbanCard({ task, onEdit, onDelete, onDragStart }: KanbanCardPr
       draggable
       onDragStart={(e) => {
         setIsDragging(true);
+        e.dataTransfer.effectAllowed = "move";
         onDragStart(e, task.id);
       }}
       onDragEnd={() => setIsDragging(false)}
@@ -56,11 +53,11 @@ export function KanbanCard({ task, onEdit, onDelete, onDragStart }: KanbanCardPr
       onMouseLeave={() => setShowActions(false)}
       style={{
         background: "var(--lh-surface)",
-        border: "1px solid var(--lh-border)",
+        border: showActions ? "1px solid var(--lh-border-strong)" : "1px solid var(--lh-border)",
         borderRadius: "var(--lh-r-md)",
         padding: 12,
-        boxShadow: "var(--lh-sh-sm)",
-        cursor: "grab",
+        boxShadow: showActions ? "var(--lh-sh-md)" : "var(--lh-sh-sm)",
+        cursor: isDragging ? "grabbing" : "grab",
         opacity: isDragging ? 0.4 : 1,
         transition: "transform 0.1s, box-shadow 0.1s, border-color 0.12s",
         userSelect: "none",
@@ -113,7 +110,8 @@ export function KanbanCard({ task, onEdit, onDelete, onDragStart }: KanbanCardPr
           margin: "8px 0 0",
           fontSize: 13.5,
           fontWeight: 500,
-          color: "var(--lh-ink)",
+          color: task.completed ? "var(--lh-muted)" : "var(--lh-ink)",
+          textDecoration: task.completed ? "line-through" : "none",
           lineHeight: 1.4,
         }}
       >
@@ -127,10 +125,14 @@ export function KanbanCard({ task, onEdit, onDelete, onDragStart }: KanbanCardPr
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
+          gap: 8,
         }}
       >
         <span
           style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 4,
             fontSize: 11.5,
             color: due.isOverdue
               ? "var(--lh-danger)"
@@ -140,6 +142,7 @@ export function KanbanCard({ task, onEdit, onDelete, onDragStart }: KanbanCardPr
             fontWeight: due.isToday ? 500 : 400,
           }}
         >
+          <CalendarIcon size={13} />
           {due.label}
         </span>
 
@@ -147,11 +150,45 @@ export function KanbanCard({ task, onEdit, onDelete, onDragStart }: KanbanCardPr
         <div
           style={{
             display: "flex",
-            gap: 2,
+            gap: 4,
             opacity: showActions ? 1 : 0,
             transition: "opacity 0.12s",
           }}
         >
+          <button
+            onClick={(e) => { e.stopPropagation(); onToggle(task.id); }}
+            title={task.completed ? "Mark pending" : "Mark done"}
+            style={{
+              width: 24,
+              height: 24,
+              borderRadius: 6,
+              border: task.completed
+                ? "1px solid var(--lh-accent-border)"
+                : "1px solid var(--lh-border)",
+              background: task.completed
+                ? "var(--lh-accent-bg)"
+                : "var(--lh-surface-2)",
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              color: task.completed ? "var(--lh-accent-ink)" : "var(--lh-muted)",
+              padding: 0,
+              transition: "background 0.12s, border-color 0.12s, color 0.12s",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = task.completed
+                ? "var(--lh-accent-bg)"
+                : "var(--lh-surface-3)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = task.completed
+                ? "var(--lh-accent-bg)"
+                : "var(--lh-surface-2)";
+            }}
+          >
+            <CheckIcon size={13} />
+          </button>
           <button
             onClick={(e) => { e.stopPropagation(); onEdit(task); }}
             title="Edit"
@@ -166,10 +203,19 @@ export function KanbanCard({ task, onEdit, onDelete, onDragStart }: KanbanCardPr
               alignItems: "center",
               justifyContent: "center",
               color: "var(--lh-muted)",
-              fontSize: 12,
+              padding: 0,
+              transition: "background 0.12s, border-color 0.12s, color 0.12s",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = "var(--lh-surface-3)";
+              e.currentTarget.style.color = "var(--lh-ink-2)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = "var(--lh-surface-2)";
+              e.currentTarget.style.color = "var(--lh-muted)";
             }}
           >
-            ✎
+            <PencilIcon size={13} />
           </button>
           <button
             onClick={(e) => { e.stopPropagation(); onDelete(task.id); }}
@@ -185,10 +231,19 @@ export function KanbanCard({ task, onEdit, onDelete, onDragStart }: KanbanCardPr
               alignItems: "center",
               justifyContent: "center",
               color: "var(--lh-danger)",
-              fontSize: 12,
+              padding: 0,
+              transition: "background 0.12s, border-color 0.12s, color 0.12s",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = "var(--lh-danger-bg)";
+              e.currentTarget.style.borderColor = "#ecc9bd";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = "var(--lh-surface-2)";
+              e.currentTarget.style.borderColor = "var(--lh-border)";
             }}
           >
-            ✕
+            <Trash2Icon size={13} />
           </button>
         </div>
       </div>

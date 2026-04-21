@@ -25,10 +25,18 @@ const CARD_STYLE: React.CSSProperties = {
   boxShadow: "var(--lh-sh-sm)",
 };
 
-const PRIORITY_COLOR: Record<string, string> = {
+const PRIORITY_MARK_COLOR: Record<string, string> = {
   high: "var(--lh-p-high)",
   medium: "var(--lh-p-med)",
   low: "var(--lh-p-low)",
+};
+
+const SUBJECT_COLORS: Record<string, string> = {
+  React: "var(--lh-subj-react)",
+  TypeScript: "var(--lh-subj-ts)",
+  "UI/UX": "var(--lh-subj-ui)",
+  Testing: "var(--lh-subj-test)",
+  Algorithms: "var(--lh-subj-algo)",
 };
 
 export function DashboardSection({
@@ -41,8 +49,17 @@ export function DashboardSection({
   const todayTasks = useMemo(() => {
     const today = new Date().toISOString().slice(0, 10);
     return visibleTasks
-      .filter((t) => !t.completed || t.dueDate === today)
-      .slice(0, 6);
+      .filter((task) => task.dueDate === today)
+      .slice(0, 5);
+  }, [visibleTasks]);
+
+  const upNextTasks = useMemo(() => {
+    const today = new Date().toISOString().slice(0, 10);
+
+    return visibleTasks
+      .filter((task) => !task.completed && task.dueDate && task.dueDate >= today)
+      .sort((a, b) => a.dueDate.localeCompare(b.dueDate))
+      .slice(0, 5);
   }, [visibleTasks]);
 
   const weekData = useMemo(() => {
@@ -78,7 +95,7 @@ export function DashboardSection({
   const weekTotal = weekData.reduce((sum, d) => sum + d.count, 0);
 
   return (
-    <div style={{ padding: "28px 28px 40px", maxWidth: 1360, margin: "0 auto" }}>
+    <div style={{ padding: "24px 28px 40px", maxWidth: 1360, margin: "0 auto" }}>
       {/* ── Section head ── */}
       <div
         style={{
@@ -139,97 +156,93 @@ export function DashboardSection({
         style={{
           display: "grid",
           gridTemplateColumns: "1.35fr 1fr",
-          gap: 20,
+          gap: 16,
         }}
         className="lh-dash-grid"
       >
         {/* ── Left column ── */}
-        <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
 
           {/* Progress card */}
-          <div style={{ ...CARD_STYLE, padding: 24 }}>
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                marginBottom: 20,
-              }}
-            >
-              <div>
+          <div style={{ ...CARD_STYLE, padding: 18 }}>
+            <div style={{ display: "flex", gap: 18, alignItems: "center" }}>
+              <ProgressRing percent={taskStats.progress} size={180} label="Complete" />
+
+              <div style={{ flex: 1 }}>
                 <h2
                   style={{
-                    margin: 0,
-                    fontSize: 15,
-                    fontWeight: 600,
+                    margin: "0 0 6px",
+                    fontFamily: "var(--lh-font-display)",
+                    fontSize: 22,
+                    fontWeight: 500,
                     color: "var(--lh-ink)",
+                    letterSpacing: "-0.02em",
+                    lineHeight: 1,
                   }}
                 >
                   Learning progress
                 </h2>
-                <p style={{ margin: "3px 0 0", fontSize: 12.5, color: "var(--lh-muted)" }}>
-                  {taskStats.completed} of {taskStats.total} tasks complete.{" "}
-                  {taskStats.dueToday > 0
-                    ? `${taskStats.dueToday} task${taskStats.dueToday !== 1 ? "s" : ""} are due today.`
-                    : "None due today."}
+                <p style={{ margin: "0 0 16px", fontSize: 13, color: "var(--lh-muted)", lineHeight: 1.55 }}>
+                  {taskStats.completed} of {taskStats.total} tasks complete. {taskStats.dueToday > 0
+                    ? `${taskStats.dueToday} task${taskStats.dueToday !== 1 ? "s" : ""} ${taskStats.dueToday === 1 ? "is" : "are"} due today.`
+                    : "No tasks due today - plan ahead."}
                 </p>
-              </div>
-            </div>
 
-            <div style={{ display: "flex", gap: 28, alignItems: "center" }}>
-              <ProgressRing percent={taskStats.progress} size={160} label="Complete" />
+                <div style={{ height: 1, background: "var(--lh-border)", marginBottom: 12 }} />
 
-              {/* 3 stat boxes */}
-              <div style={{ display: "flex", gap: 12, flex: 1 }}>
-                {[
-                  { label: "Pending", value: taskStats.pending, color: "var(--lh-accent)" },
-                  { label: "Done", value: taskStats.completed, color: "var(--lh-success)" },
-                  { label: "Due today", value: taskStats.dueToday, color: "var(--lh-p-high)" },
-                ].map(({ label, value, color }) => (
-                  <div
-                    key={label}
-                    style={{
-                      flex: 1,
-                      background: "var(--lh-surface-2)",
-                      border: "1px solid var(--lh-border)",
-                      borderRadius: "var(--lh-r-md)",
-                      padding: "14px 12px",
-                      textAlign: "center",
-                    }}
-                  >
-                    <p
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
+                    gap: 8,
+                  }}
+                >
+                  {[
+                    { label: "Pending", value: taskStats.pending },
+                    { label: "Done", value: taskStats.completed },
+                    { label: "Due today", value: taskStats.dueToday },
+                  ].map(({ label, value }, index, arr) => (
+                    <div
+                      key={label}
                       style={{
-                        margin: "0 0 4px",
-                        fontFamily: "var(--lh-font-display)",
-                        fontSize: 32,
-                        fontWeight: 500,
-                        color,
-                        lineHeight: 1,
-                        letterSpacing: "-0.02em",
+                        padding: "0 12px",
+                        borderRight: index === arr.length - 1 ? "none" : "1px solid var(--lh-border)",
                       }}
                     >
-                      {value}
-                    </p>
-                    <p
-                      style={{
-                        margin: 0,
-                        fontSize: 10.5,
-                        fontWeight: 600,
-                        color: "var(--lh-muted-2)",
-                        letterSpacing: "0.06em",
-                        textTransform: "uppercase",
-                      }}
-                    >
-                      {label}
-                    </p>
-                  </div>
-                ))}
+                      <p
+                        style={{
+                          margin: "0 0 4px",
+                          fontFamily: "var(--lh-font-display)",
+                          fontSize: 22,
+                          fontWeight: 500,
+                          color: "var(--lh-ink)",
+                          lineHeight: 1,
+                          letterSpacing: "-0.03em",
+                        }}
+                      >
+                        {value}
+                      </p>
+                      <p
+                        style={{
+                          margin: 0,
+                          fontSize: 12,
+                          fontWeight: 600,
+                          color: "var(--lh-muted-2)",
+                          letterSpacing: "0.07em",
+                          textTransform: "uppercase",
+                        }}
+                      >
+                        {label}
+                      </p>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
           </div>
 
           {/* Momentum chart */}
-          <div style={{ ...CARD_STYLE, padding: 22 }}>
+          <div style={{ ...CARD_STYLE, padding: 18 }}>
             <div
               style={{
                 display: "flex",
@@ -239,7 +252,7 @@ export function DashboardSection({
               }}
             >
               <div>
-                <h2 style={{ margin: 0, fontSize: 15, fontWeight: 600, color: "var(--lh-ink)" }}>
+                <h2 style={{ margin: 0, fontSize: 28, fontWeight: 500, color: "var(--lh-ink)", fontFamily: "var(--lh-font-display)", lineHeight: 1 }}>
                   Weekly momentum
                 </h2>
                 <p style={{ margin: "3px 0 0", fontSize: 12.5, color: "var(--lh-muted)" }}>
@@ -265,18 +278,17 @@ export function DashboardSection({
         </div>
 
         {/* ── Right column ── */}
-        <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
           <StreakCard streak={streak} weekDays={streakDays} />
 
           {/* Today's focus */}
           <div style={{ ...CARD_STYLE, overflow: "hidden" }}>
             <div
               style={{
-                padding: "16px 20px 12px",
+                padding: "14px 16px 10px",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "space-between",
-                borderBottom: "1px solid var(--lh-border)",
               }}
             >
               <div>
@@ -284,20 +296,18 @@ export function DashboardSection({
                   Today's focus
                 </h2>
                 <p style={{ margin: "2px 0 0", fontSize: 12, color: "var(--lh-muted)" }}>
-                  {taskStats.dueToday > 0
-                    ? `${taskStats.dueToday} task${taskStats.dueToday !== 1 ? "s" : ""} due today`
-                    : "Upcoming tasks"}
+                  {todayTasks.length} task{todayTasks.length !== 1 ? "s" : ""} due today
                 </p>
               </div>
               <button
                 onClick={onNavigateToTasks}
                 style={{
-                  height: 26,
-                  padding: "0 10px",
+                  height: 24,
+                  padding: "0 6px",
                   background: "transparent",
-                  border: "1px solid var(--lh-border-strong)",
+                  border: "none",
                   borderRadius: "var(--lh-r-xs)",
-                  fontSize: 12,
+                  fontSize: 12.5,
                   fontWeight: 500,
                   color: "var(--lh-ink-2)",
                   cursor: "pointer",
@@ -311,7 +321,7 @@ export function DashboardSection({
               </button>
             </div>
 
-            <div style={{ padding: "8px 20px 16px" }}>
+            <div style={{ padding: "2px 16px 12px" }}>
               {todayTasks.length === 0 ? (
                 <div
                   style={{
@@ -320,13 +330,13 @@ export function DashboardSection({
                     color: "var(--lh-muted-2)",
                   }}
                 >
-                  <p style={{ margin: 0, fontSize: 13 }}>No pending tasks.</p>
+                  <p style={{ margin: 0, fontSize: 13 }}>Nothing scheduled for today</p>
                   <p style={{ margin: "4px 0 0", fontSize: 11.5 }}>
-                    Add tasks to see them here.
+                    Use tomorrow as a buffer or add a quick task.
                   </p>
                 </div>
               ) : (
-                <div style={{ display: "flex", flexDirection: "column", gap: 2, marginTop: 8 }}>
+                <div style={{ display: "flex", flexDirection: "column", gap: 4, marginTop: 2 }}>
                   {todayTasks.map((task) => (
                     <div
                       key={task.id}
@@ -334,20 +344,41 @@ export function DashboardSection({
                         display: "flex",
                         alignItems: "center",
                         gap: 12,
-                        padding: "9px 0",
-                        borderBottom: "1px solid var(--lh-border)",
+                        padding: "10px 8px",
+                        borderRadius: "var(--lh-r-sm)",
                       }}
                     >
-                      {/* Priority bar */}
                       <div
                         style={{
                           width: 3,
-                          height: 28,
-                          borderRadius: 99,
-                          background: PRIORITY_COLOR[task.priority] ?? "var(--lh-border-strong)",
+                          height: 32,
+                          alignSelf: "stretch",
+                          borderRadius: 2,
+                          background: PRIORITY_MARK_COLOR[task.priority] ?? "var(--lh-border-strong)",
                           flexShrink: 0,
                         }}
                       />
+
+                      <div
+                        style={{
+                          width: 18,
+                          height: 18,
+                          borderRadius: 5,
+                          border: task.completed
+                            ? "1px solid var(--lh-accent)"
+                            : "1px solid var(--lh-border-strong)",
+                          background: task.completed ? "var(--lh-accent)" : "transparent",
+                          flexShrink: 0,
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          color: "#fff",
+                          fontSize: 12,
+                          fontWeight: 700,
+                        }}
+                      >
+                        {task.completed ? "✓" : ""}
+                      </div>
 
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <p
@@ -364,30 +395,152 @@ export function DashboardSection({
                         >
                           {task.title}
                         </p>
-                        <p style={{ margin: 0, fontSize: 11.5, color: "var(--lh-muted-2)" }}>
-                          {task.subject}
-                          {task.dueDate ? ` · due ${task.dueDate}` : ""}
+                        <p style={{ margin: "2px 0 0", fontSize: 11.5, color: "var(--lh-muted-2)" }}>
+                          <span
+                            style={{
+                              display: "inline-block",
+                              width: 6,
+                              height: 6,
+                              borderRadius: 999,
+                              background: SUBJECT_COLORS[task.subject] ?? "var(--lh-muted)",
+                              marginRight: 8,
+                              verticalAlign: "middle",
+                            }}
+                          />
+                          {task.subject} · {task.priority} priority
                         </p>
                       </div>
-
-                      <span
-                        style={{
-                          fontSize: 10.5,
-                          fontWeight: 600,
-                          color: PRIORITY_COLOR[task.priority] ?? "var(--lh-muted)",
-                          letterSpacing: "0.04em",
-                          textTransform: "uppercase",
-                          flexShrink: 0,
-                        }}
-                      >
-                        {task.priority}
-                      </span>
                     </div>
                   ))}
                 </div>
               )}
             </div>
           </div>
+        </div>
+      </div>
+
+      <div style={{ ...CARD_STYLE, marginTop: 16, minHeight: 150, overflow: "hidden" }}>
+        <div
+          style={{
+            padding: "14px 16px 10px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+          }}
+        >
+          <div>
+            <h2 style={{ margin: 0, fontSize: 24, fontWeight: 500, color: "var(--lh-ink)", fontFamily: "var(--lh-font-display)", lineHeight: 1 }}>
+              Up next
+            </h2>
+            <p style={{ margin: "3px 0 0", fontSize: 12.5, color: "var(--lh-muted)" }}>
+              Upcoming tasks across your subjects
+            </p>
+          </div>
+          <button
+            onClick={onNavigateToTasks}
+            style={{
+              height: 24,
+              padding: "0 6px",
+              background: "transparent",
+              border: "none",
+              fontSize: 12.5,
+              fontWeight: 500,
+              color: "var(--lh-ink-2)",
+              cursor: "pointer",
+              fontFamily: "var(--lh-font-sans)",
+            }}
+          >
+            Open tasks →
+          </button>
+        </div>
+
+        <div style={{ padding: "0 16px 14px" }}>
+          {upNextTasks.length === 0 ? (
+            <div
+              style={{
+                minHeight: 108,
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+                color: "var(--lh-muted-2)",
+                fontSize: 13,
+                fontWeight: 600,
+                gap: 6,
+              }}
+            >
+              <div
+                style={{
+                  width: 36,
+                  height: 36,
+                  borderRadius: 10,
+                  border: "1px solid var(--lh-border)",
+                  background: "var(--lh-surface-2)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  color: "var(--lh-muted)",
+                  fontSize: 15,
+                }}
+              >
+                ☐
+              </div>
+              No upcoming tasks
+              <p style={{ margin: 0, fontSize: 11.5, fontWeight: 400 }}>
+                Plan ahead by adding tasks with due dates.
+              </p>
+            </div>
+          ) : (
+            <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+              {upNextTasks.map((task) => (
+                <div
+                  key={task.id}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 12,
+                    padding: "10px 8px",
+                    borderRadius: "var(--lh-r-sm)",
+                  }}
+                >
+                  <div
+                    style={{
+                      width: 3,
+                      height: 32,
+                      alignSelf: "stretch",
+                      borderRadius: 2,
+                      background: PRIORITY_MARK_COLOR[task.priority] ?? "var(--lh-border-strong)",
+                      flexShrink: 0,
+                    }}
+                  />
+                  <p
+                    style={{
+                      margin: 0,
+                      fontSize: 13.5,
+                      color: "var(--lh-ink)",
+                      fontWeight: 500,
+                      flex: 1,
+                    }}
+                  >
+                    {task.title}
+                  </p>
+                  <span
+                    style={{
+                      fontSize: 11.5,
+                      fontWeight: 600,
+                      color: "var(--lh-muted)",
+                      textTransform: "capitalize",
+                    }}
+                  >
+                    {task.priority}
+                  </span>
+                  <p style={{ margin: 0, fontSize: 11.5, color: "var(--lh-muted-2)", minWidth: 110, textAlign: "right" }}>
+                    due {task.dueDate}
+                  </p>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>

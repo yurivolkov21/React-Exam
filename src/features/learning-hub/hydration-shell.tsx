@@ -1,7 +1,6 @@
 import { AppSidebar } from "@/components/app-sidebar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
-import { Toaster } from "@/components/ui/sonner";
 import type { AppSection, UserProfile } from "./types";
 
 type HydrationShellProps = {
@@ -39,7 +38,6 @@ export function HydrationShell({
           <Skeleton className="h-48 rounded-xl" />
         </div>
       </SidebarInset>
-      <Toaster richColors />
     </SidebarProvider>
   );
 }

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { PlusIcon } from "lucide-react";
 import type { StudyTask } from "../types";
 import { KanbanCard } from "./kanban-card";
 
@@ -7,8 +8,10 @@ interface KanbanColumnProps {
   status: "pending" | "in-progress" | "done";
   tasks: StudyTask[];
   onEdit: (task: StudyTask) => void;
+  onToggle: (id: string) => void;
   onDelete: (id: string) => void;
   onDrop: (taskId: string, newStatus: "pending" | "in-progress" | "done") => void;
+  onAddTask?: () => void;
 }
 
 const STATUS_DOT: Record<string, string> = {
@@ -17,7 +20,7 @@ const STATUS_DOT: Record<string, string> = {
   done: "var(--lh-success)",
 };
 
-export function KanbanColumn({ title, status, tasks, onEdit, onDelete, onDrop }: KanbanColumnProps) {
+export function KanbanColumn({ title, status, tasks, onEdit, onToggle, onDelete, onDrop, onAddTask }: KanbanColumnProps) {
   const [isDropZone, setIsDropZone] = useState(false);
   const [draggingId, setDraggingId] = useState<string | null>(null);
 
@@ -47,9 +50,7 @@ export function KanbanColumn({ title, status, tasks, onEdit, onDelete, onDrop }:
       onDrop={handleDrop}
       style={{
         background: isDropZone ? "var(--lh-accent-bg)" : "var(--lh-surface-2)",
-        border: isDropZone
-          ? "1.5px dashed var(--lh-accent)"
-          : "1px solid var(--lh-border)",
+        border: isDropZone ? "1px dashed var(--lh-accent-border)" : "1px solid var(--lh-border)",
         borderRadius: "var(--lh-r-lg)",
         padding: 12,
         minHeight: 400,
@@ -102,6 +103,34 @@ export function KanbanColumn({ title, status, tasks, onEdit, onDelete, onDrop }:
         >
           {tasks.length}
         </span>
+
+        <button
+          onClick={onAddTask}
+          title="Add task"
+          style={{
+            marginLeft: "auto",
+            width: 24,
+            height: 24,
+            borderRadius: 6,
+            border: "none",
+            background: "transparent",
+            color: "var(--lh-muted)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            cursor: "pointer",
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = "var(--lh-surface-3)";
+            e.currentTarget.style.color = "var(--lh-ink-2)";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = "transparent";
+            e.currentTarget.style.color = "var(--lh-muted)";
+          }}
+        >
+          <PlusIcon size={13} />
+        </button>
       </div>
 
       {/* Cards */}
@@ -130,6 +159,7 @@ export function KanbanColumn({ title, status, tasks, onEdit, onDelete, onDrop }:
               <KanbanCard
                 task={task}
                 onEdit={onEdit}
+                onToggle={onToggle}
                 onDelete={onDelete}
                 onDragStart={handleDragStart}
               />

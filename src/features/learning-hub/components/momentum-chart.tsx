@@ -22,11 +22,11 @@ export function MomentumChart({ data }: MomentumChartProps) {
           alignItems: "flex-end",
         }}
       >
-        {data.map((day) => {
+        {data.map((day, index) => {
           const heightPct = (day.count / max) * 100;
           return (
             <div
-              key={day.label}
+              key={`${day.label}-${index}`}
               style={{
                 display: "flex",
                 flexDirection: "column",
@@ -85,9 +85,9 @@ export function MomentumChart({ data }: MomentumChartProps) {
           gap: 8,
         }}
       >
-        {data.map((day) => (
+        {data.map((day, index) => (
           <span
-            key={day.label}
+            key={`${day.label}-${index}-label`}
             style={{
               fontSize: 10.5,
               color: day.isToday ? "var(--lh-accent-ink)" : "var(--lh-muted-2)",

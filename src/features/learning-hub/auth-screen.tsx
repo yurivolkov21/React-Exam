@@ -2,7 +2,6 @@ import type { FormEvent } from "react";
 
 import { LoginForm } from "@/components/login-form";
 import { SignupForm } from "@/components/signup-form";
-import { Toaster } from "@/components/ui/sonner";
 import type { AuthMode } from "./types";
 
 type AuthScreenProps = {
@@ -31,7 +30,7 @@ export function AuthScreen({
       style={{
         display: "grid",
         gridTemplateColumns: "1fr 1fr",
-        minHeight: "100dvh",
+        minHeight: "100svh",
       }}
     >
       {/* ── Left: dark hero panel ── */}
@@ -271,7 +270,6 @@ export function AuthScreen({
         </div>
       </div>
 
-      <Toaster richColors />
     </div>
   );
 }

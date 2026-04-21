@@ -317,7 +317,12 @@ function App() {
     setTasks((prev) =>
       prev.map((task) =>
         task.id === taskId
-          ? { ...task, completed: !task.completed, updatedAt: new Date().toISOString() }
+          ? {
+              ...task,
+              completed: !task.completed,
+              kanbanStatus: task.completed ? "pending" : "done",
+              updatedAt: new Date().toISOString(),
+            }
           : task,
       ),
     );

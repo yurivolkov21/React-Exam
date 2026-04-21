@@ -20,10 +20,36 @@ export function StreakCard({ streak, weekDays }: StreakCardProps) {
         padding: "20px",
         display: "flex",
         flexDirection: "column",
-        gap: 16,
+        gap: 14,
       }}
     >
-      <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <span
+          style={{
+            fontSize: 12,
+            fontWeight: 600,
+            color: "var(--lh-accent-ink)",
+            letterSpacing: "0.08em",
+            textTransform: "uppercase",
+            display: "flex",
+            alignItems: "center",
+            gap: 6,
+          }}
+        >
+          🔥 Current streak
+        </span>
+        <span
+          style={{
+            fontSize: 12,
+            fontWeight: 500,
+            color: "var(--lh-muted)",
+          }}
+        >
+          Last 7 days
+        </span>
+      </div>
+
+      <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
         <span
           style={{
             fontFamily: "var(--lh-font-display)",
@@ -38,12 +64,12 @@ export function StreakCard({ streak, weekDays }: StreakCardProps) {
         </span>
         <span
           style={{
-            fontSize: 13,
-            fontWeight: 500,
+            fontSize: 15,
+            fontWeight: 400,
             color: "var(--lh-muted)",
           }}
         >
-          day streak
+          {streak === 1 ? "day" : "days"}
         </span>
       </div>
 
@@ -58,10 +84,7 @@ export function StreakCard({ streak, weekDays }: StreakCardProps) {
           const isDone = days[i] ?? false;
           const isToday = i === todayIdx;
           return (
-            <div
-              key={label}
-              style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}
-            >
+            <div key={`${label}-${i}`}>
               <div
                 style={{
                   aspectRatio: "1",
@@ -69,40 +92,32 @@ export function StreakCard({ streak, weekDays }: StreakCardProps) {
                   borderRadius: 6,
                   background: isDone
                     ? "var(--lh-accent)"
-                    : isToday
-                    ? "var(--lh-surface-3)"
-                    : "var(--lh-surface-3)",
+                    : "var(--lh-surface-2)",
                   border: isDone
                     ? "1px solid var(--lh-accent)"
                     : "1px solid var(--lh-border)",
                   boxShadow: isToday
                     ? "0 0 0 2px var(--lh-bg), 0 0 0 3.5px var(--lh-ink)"
                     : "none",
-                }}
-              />
-              <span
-                style={{
-                  fontSize: 10,
-                  color: "var(--lh-muted-2)",
-                  fontWeight: 500,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
                 }}
               >
-                {label[0]}
-              </span>
+                <span
+                  style={{
+                    fontSize: 10,
+                    color: isDone ? "#fff" : "var(--lh-muted)",
+                    fontWeight: 600,
+                  }}
+                >
+                  {label[0]}
+                </span>
+              </div>
             </div>
           );
         })}
       </div>
-
-      <p
-        style={{
-          margin: 0,
-          fontSize: 12,
-          color: "var(--lh-muted)",
-        }}
-      >
-        Keep it up — study every day to grow your streak!
-      </p>
     </div>
   );
 }
