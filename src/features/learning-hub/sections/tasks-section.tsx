@@ -1,30 +1,9 @@
-import { CheckCircle2Icon, ListTodoIcon, PlusIcon, Trash2Icon } from "lucide-react";
-
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
-  Empty,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from "@/components/ui/empty";
-import { Input } from "@/components/ui/input";
-import {
-  NativeSelect,
-  NativeSelectOption,
-} from "@/components/ui/native-select";
-import { Separator } from "@/components/ui/separator";
+import { useState } from "react";
 import type { FormEvent } from "react";
+
+import { KanbanColumn } from "../components/kanban-column";
 import { SUBJECT_OPTIONS } from "../constants";
-import type { StudyTask, TaskFilter, TaskPriority } from "../types";
+import type { KanbanStatus, StudyTask, TaskFilter, TaskPriority } from "../types";
 
 type TasksSectionProps = {
   editingTaskId: string | null;
@@ -47,6 +26,32 @@ type TasksSectionProps = {
   onStartEditTask: (task: StudyTask) => void;
   onToggleTask: (taskId: string) => void;
   onDeleteTask: (taskId: string) => void;
+  onMoveTask?: (taskId: string, status: KanbanStatus) => void;
+};
+
+const inputStyle: React.CSSProperties = {
+  height: 36,
+  padding: "0 12px",
+  background: "var(--lh-surface)",
+  border: "1px solid var(--lh-border-strong)",
+  borderRadius: "var(--lh-r-sm)",
+  fontSize: 13.5,
+  color: "var(--lh-ink)",
+  outline: "none",
+  fontFamily: "var(--lh-font-sans)",
+  transition: "border-color 0.12s, box-shadow 0.12s",
+  boxSizing: "border-box" as const,
+};
+
+const selectStyle: React.CSSProperties = {
+  ...inputStyle,
+  cursor: "pointer",
+  appearance: "none" as const,
+  WebkitAppearance: "none" as const,
+  paddingRight: 28,
+  backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M2 4l4 4 4-4' stroke='%2378716c' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E")`,
+  backgroundRepeat: "no-repeat",
+  backgroundPosition: "right 10px center",
 };
 
 export function TasksSection({
@@ -56,7 +61,6 @@ export function TasksSection({
   priorityInput,
   dueDateInput,
   taskSearch,
-  taskFilter,
   visibleTasks,
   filteredTasks,
   onTitleInputChange,
@@ -64,159 +68,317 @@ export function TasksSection({
   onPriorityInputChange,
   onDueDateInputChange,
   onTaskSearchChange,
-  onTaskFilterChange,
   onSubmitTask,
   onCancelEdit,
   onStartEditTask,
-  onToggleTask,
   onDeleteTask,
+  onMoveTask,
 }: TasksSectionProps) {
+  const [showForm, setShowForm] = useState(false);
+
+  const getKanbanStatus = (task: StudyTask): KanbanStatus => {
+    if (task.kanbanStatus) return task.kanbanStatus;
+    return task.completed ? "done" : "pending";
+  };
+
+  const pendingTasks = filteredTasks.filter((t) => getKanbanStatus(t) === "pending");
+  const inProgressTasks = filteredTasks.filter((t) => getKanbanStatus(t) === "in-progress");
+  const doneTasks = filteredTasks.filter((t) => getKanbanStatus(t) === "done");
+
+  const handleDrop = (taskId: string, status: KanbanStatus) => {
+    if (onMoveTask) {
+      onMoveTask(taskId, status);
+    }
+  };
+
+  const handleFormSubmit = (e: FormEvent<HTMLFormElement>) => {
+    onSubmitTask(e);
+    setShowForm(false);
+  };
+
+  const handleFocus = (e: React.FocusEvent<HTMLInputElement | HTMLSelectElement>) => {
+    e.target.style.borderColor = "var(--lh-accent)";
+    e.target.style.boxShadow = "0 0 0 3px var(--lh-accent-bg)";
+  };
+  const handleBlur = (e: React.FocusEvent<HTMLInputElement | HTMLSelectElement>) => {
+    e.target.style.borderColor = "var(--lh-border-strong)";
+    e.target.style.boxShadow = "none";
+  };
+
   return (
-    <div className="space-y-6 p-4 md:p-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>{editingTaskId ? "Edit Task" : "Create New Task"}</CardTitle>
-          <CardDescription>
-            Create concise study tasks and prioritize deadlines for easier tracking.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form className="grid gap-3 md:grid-cols-2" onSubmit={onSubmitTask}>
-            <Input
+    <div style={{ padding: "24px 28px 40px", maxWidth: 1360, margin: "0 auto" }}>
+      {/* Section header */}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          marginBottom: 20,
+          gap: 16,
+        }}
+      >
+        <div>
+          <h1
+            style={{
+              fontFamily: "var(--lh-font-display)",
+              fontSize: 22,
+              fontWeight: 500,
+              color: "var(--lh-ink)",
+              letterSpacing: "-0.02em",
+              margin: 0,
+            }}
+          >
+            Task Board
+          </h1>
+          <p style={{ margin: "4px 0 0", fontSize: 13, color: "var(--lh-muted)" }}>
+            {visibleTasks.length} total tasks · {visibleTasks.filter((t) => !t.completed).length} pending
+          </p>
+        </div>
+
+        <button
+          onClick={() => setShowForm(!showForm)}
+          style={{
+            height: 36,
+            padding: "0 14px",
+            background: showForm ? "var(--lh-ink-2)" : "var(--lh-ink)",
+            color: "#fff",
+            border: "none",
+            borderRadius: "var(--lh-r-sm)",
+            fontSize: 13.5,
+            fontWeight: 500,
+            cursor: "pointer",
+            fontFamily: "var(--lh-font-sans)",
+            transition: "background 0.12s",
+          }}
+        >
+          {editingTaskId ? "✎ Editing task" : showForm ? "✕ Cancel" : "+ New Task"}
+        </button>
+      </div>
+
+      {/* Task form (collapsible) */}
+      {(showForm || editingTaskId) && (
+        <div
+          style={{
+            background: "var(--lh-surface)",
+            border: "1px solid var(--lh-border)",
+            borderRadius: "var(--lh-r-lg)",
+            padding: 20,
+            marginBottom: 20,
+            boxShadow: "var(--lh-sh-sm)",
+          }}
+        >
+          <h2
+            style={{
+              margin: "0 0 16px",
+              fontSize: 14,
+              fontWeight: 600,
+              color: "var(--lh-ink)",
+            }}
+          >
+            {editingTaskId ? "Edit Task" : "New Task"}
+          </h2>
+          <form
+            onSubmit={handleFormSubmit}
+            style={{
+              display: "grid",
+              gridTemplateColumns: "1fr 1fr",
+              gap: 12,
+            }}
+          >
+            <input
               placeholder="Task title"
               value={titleInput}
-              onChange={(event) => onTitleInputChange(event.target.value)}
+              onChange={(e) => onTitleInputChange(e.target.value)}
+              style={{ ...inputStyle, gridColumn: "1 / -1" }}
+              onFocus={handleFocus}
+              onBlur={handleBlur}
             />
-            <NativeSelect
+            <select
               value={subjectInput}
-              onChange={(event) => onSubjectInputChange(event.target.value)}
+              onChange={(e) => onSubjectInputChange(e.target.value)}
+              style={selectStyle}
+              onFocus={handleFocus}
+              onBlur={handleBlur}
             >
-              {SUBJECT_OPTIONS.map((subjectOption) => (
-                <NativeSelectOption key={subjectOption} value={subjectOption}>
-                  {subjectOption}
-                </NativeSelectOption>
+              {SUBJECT_OPTIONS.map((opt) => (
+                <option key={opt} value={opt}>{opt}</option>
               ))}
-            </NativeSelect>
-            <NativeSelect
+            </select>
+            <select
               value={priorityInput}
-              onChange={(event) => onPriorityInputChange(event.target.value as TaskPriority)}
+              onChange={(e) => onPriorityInputChange(e.target.value as TaskPriority)}
+              style={selectStyle}
+              onFocus={handleFocus}
+              onBlur={handleBlur}
             >
-              <NativeSelectOption value="low">Low priority</NativeSelectOption>
-              <NativeSelectOption value="medium">Medium priority</NativeSelectOption>
-              <NativeSelectOption value="high">High priority</NativeSelectOption>
-            </NativeSelect>
-            <Input
+              <option value="low">Low priority</option>
+              <option value="medium">Medium priority</option>
+              <option value="high">High priority</option>
+            </select>
+            <input
               type="date"
               value={dueDateInput}
-              onChange={(event) => onDueDateInputChange(event.target.value)}
+              onChange={(e) => onDueDateInputChange(e.target.value)}
+              style={inputStyle}
+              onFocus={handleFocus}
+              onBlur={handleBlur}
             />
-            <div className="md:col-span-2 flex flex-wrap gap-2">
-              <Button type="submit">
-                <PlusIcon />
-                {editingTaskId ? "Update Task" : "Add Task"}
-              </Button>
-              {editingTaskId ? (
-                <Button variant="outline" type="button" onClick={onCancelEdit}>
-                  Cancel edit
-                </Button>
-              ) : null}
+            <div style={{ display: "flex", gap: 8 }}>
+              <button
+                type="submit"
+                style={{
+                  height: 36,
+                  padding: "0 14px",
+                  background: "var(--lh-ink)",
+                  color: "#fff",
+                  border: "none",
+                  borderRadius: "var(--lh-r-sm)",
+                  fontSize: 13.5,
+                  fontWeight: 500,
+                  cursor: "pointer",
+                  fontFamily: "var(--lh-font-sans)",
+                }}
+              >
+                {editingTaskId ? "Update" : "Add Task"}
+              </button>
+              {editingTaskId && (
+                <button
+                  type="button"
+                  onClick={() => { onCancelEdit(); setShowForm(false); }}
+                  style={{
+                    height: 36,
+                    padding: "0 14px",
+                    background: "transparent",
+                    color: "var(--lh-muted)",
+                    border: "1px solid var(--lh-border-strong)",
+                    borderRadius: "var(--lh-r-sm)",
+                    fontSize: 13.5,
+                    fontWeight: 500,
+                    cursor: "pointer",
+                    fontFamily: "var(--lh-font-sans)",
+                  }}
+                >
+                  Cancel
+                </button>
+              )}
             </div>
           </form>
-        </CardContent>
-      </Card>
+        </div>
+      )}
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Task List</CardTitle>
-          <CardDescription>Study tasks saved in localStorage.</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <div className="flex flex-col gap-3 rounded-md border p-3 sm:flex-row sm:items-center sm:justify-between">
-            <Input
-              value={taskSearch}
-              onChange={(event) => onTaskSearchChange(event.target.value)}
-              placeholder="Search by title or subject"
-              className="sm:max-w-xs"
-            />
-            <div className="flex flex-wrap gap-2">
-              <Button
-                size="sm"
-                variant={taskFilter === "all" ? "default" : "outline"}
-                onClick={() => onTaskFilterChange("all")}
-              >
-                All
-              </Button>
-              <Button
-                size="sm"
-                variant={taskFilter === "pending" ? "default" : "outline"}
-                onClick={() => onTaskFilterChange("pending")}
-              >
-                Pending
-              </Button>
-              <Button
-                size="sm"
-                variant={taskFilter === "done" ? "default" : "outline"}
-                onClick={() => onTaskFilterChange("done")}
-              >
-                Done
-              </Button>
-            </div>
-          </div>
+      {/* Search bar */}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 10,
+          marginBottom: 16,
+        }}
+      >
+        <input
+          value={taskSearch}
+          onChange={(e) => onTaskSearchChange(e.target.value)}
+          placeholder="Search tasks..."
+          style={{
+            ...inputStyle,
+            flex: 1,
+            maxWidth: 320,
+          }}
+          onFocus={handleFocus}
+          onBlur={handleBlur}
+        />
 
-          {filteredTasks.map((task) => (
-            <div key={task.id} className="rounded-md border p-3">
-              <div className="flex flex-wrap items-start justify-between gap-3">
-                <div className="space-y-1">
-                  <p className="text-sm font-medium">{task.title}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {task.subject} {task.dueDate ? `• due ${task.dueDate}` : ""}
-                  </p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Badge variant="outline">{task.priority}</Badge>
-                  <Badge variant={task.completed ? "secondary" : "outline"}>
-                    {task.completed ? "Done" : "Pending"}
-                  </Badge>
-                </div>
-              </div>
-              <Separator className="my-3" />
-              <div className="flex flex-wrap gap-2">
-                <Button variant="outline" size="sm" onClick={() => onStartEditTask(task)}>
-                  Edit
-                </Button>
-                <Button variant="outline" size="sm" onClick={() => onToggleTask(task.id)}>
-                  <CheckCircle2Icon />
-                  {task.completed ? "Mark pending" : "Mark done"}
-                </Button>
-                <Button variant="destructive" size="sm" onClick={() => onDeleteTask(task.id)}>
-                  <Trash2Icon />
-                  Delete
-                </Button>
-              </div>
-            </div>
+        <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+          {SUBJECT_OPTIONS.map((subj) => (
+            <button
+              key={subj}
+              onClick={() => onTaskSearchChange(taskSearch === subj ? "" : subj)}
+              style={{
+                height: 26,
+                padding: "0 10px",
+                background: taskSearch === subj ? "var(--lh-ink)" : "var(--lh-surface-2)",
+                color: taskSearch === subj ? "#fff" : "var(--lh-ink-2)",
+                border: `1px solid ${taskSearch === subj ? "var(--lh-ink)" : "var(--lh-border)"}`,
+                borderRadius: 999,
+                fontSize: 12,
+                fontWeight: 500,
+                cursor: "pointer",
+                fontFamily: "var(--lh-font-sans)",
+                transition: "all 0.12s",
+              }}
+            >
+              {subj}
+            </button>
           ))}
+        </div>
+      </div>
 
-          {filteredTasks.length === 0 ? (
-            <Empty>
-              <EmptyHeader>
-                <EmptyMedia variant="icon">
-                  <ListTodoIcon />
-                </EmptyMedia>
-                <EmptyTitle>
-                  {visibleTasks.length === 0
-                    ? "No tasks yet"
-                    : "No tasks match current filter"}
-                </EmptyTitle>
-                <EmptyDescription>
-                  {visibleTasks.length === 0
-                    ? "Add your first task to start using Learning Hub Mini."
-                    : "Try changing filters or clearing the search keyword to find matching tasks."}
-                </EmptyDescription>
-              </EmptyHeader>
-            </Empty>
-          ) : null}
-        </CardContent>
-      </Card>
+      {/* Kanban board */}
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(3, 1fr)",
+          gap: 16,
+        }}
+      >
+        <KanbanColumn
+          title="Pending"
+          status="pending"
+          tasks={pendingTasks}
+          onEdit={(task) => { onStartEditTask(task); setShowForm(true); }}
+          onDelete={onDeleteTask}
+          onDrop={handleDrop}
+        />
+        <KanbanColumn
+          title="In Progress"
+          status="in-progress"
+          tasks={inProgressTasks}
+          onEdit={(task) => { onStartEditTask(task); setShowForm(true); }}
+          onDelete={onDeleteTask}
+          onDrop={handleDrop}
+        />
+        <KanbanColumn
+          title="Done"
+          status="done"
+          tasks={doneTasks}
+          onEdit={(task) => { onStartEditTask(task); setShowForm(true); }}
+          onDelete={onDeleteTask}
+          onDrop={handleDrop}
+        />
+      </div>
+
+      {visibleTasks.length === 0 && (
+        <div
+          style={{
+            textAlign: "center",
+            padding: "48px 24px",
+            color: "var(--lh-muted-2)",
+          }}
+        >
+          <div
+            style={{
+              width: 52,
+              height: 52,
+              background: "var(--lh-surface-2)",
+              border: "1px solid var(--lh-border)",
+              borderRadius: 12,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              margin: "0 auto 16px",
+              fontSize: 22,
+            }}
+          >
+            ☑
+          </div>
+          <p style={{ margin: 0, fontSize: 14, fontWeight: 600, color: "var(--lh-ink)" }}>
+            No tasks yet
+          </p>
+          <p style={{ margin: "6px 0 0", fontSize: 12.5, maxWidth: 280, marginLeft: "auto", marginRight: "auto" }}>
+            Click "New Task" to add your first study task.
+          </p>
+        </div>
+      )}
     </div>
   );
 }

@@ -1,11 +1,7 @@
 import { type FormEvent, useEffect, useMemo, useState } from "react";
-import { PlusIcon } from "lucide-react";
 import { toast } from "sonner";
 
 import { AppSidebar } from "@/components/app-sidebar";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { Toaster } from "@/components/ui/sonner";
 import { AuthScreen } from "@/features/learning-hub/auth-screen";
@@ -421,6 +417,21 @@ function App() {
     toast.success("Note added.");
   };
 
+  const moveTask = (taskId: string, status: import("@/features/learning-hub/types").KanbanStatus) => {
+    setTasks((prev) =>
+      prev.map((task) =>
+        task.id === taskId
+          ? {
+              ...task,
+              kanbanStatus: status,
+              completed: status === "done",
+              updatedAt: new Date().toISOString(),
+            }
+          : task,
+      ),
+    );
+  };
+
   const deleteNote = (noteId: string) => {
     setNotes((previousNotes) => previousNotes.filter((note) => note.id !== noteId));
     toast.info("Note deleted.");
@@ -478,7 +489,14 @@ function App() {
 
   let sectionContent = null;
   if (activeSection === "dashboard") {
-    sectionContent = <DashboardSection taskStats={taskStats} visibleTasks={visibleTasks} />;
+    sectionContent = (
+      <DashboardSection
+        taskStats={taskStats}
+        visibleTasks={visibleTasks}
+        currentUserName={currentUser.name}
+        onNavigateToTasks={() => setActiveSection("tasks")}
+      />
+    );
   } else if (activeSection === "tasks") {
     sectionContent = (
       <TasksSection
@@ -502,6 +520,7 @@ function App() {
         onStartEditTask={startEditingTask}
         onToggleTask={toggleTask}
         onDeleteTask={deleteTask}
+        onMoveTask={moveTask}
       />
     );
   } else if (activeSection === "notes") {
@@ -542,21 +561,82 @@ function App() {
         user={currentUser}
       />
       <SidebarInset>
-        <header className="flex h-14 items-center justify-between border-b bg-background px-4 md:px-6">
-          <div className="flex items-center gap-2">
+        <header
+          style={{
+            height: 56,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            borderBottom: "1px solid var(--lh-border)",
+            background: "var(--lh-surface)",
+            backdropFilter: "blur(8px)",
+            padding: "0 24px",
+            position: "sticky",
+            top: 0,
+            zIndex: 10,
+            gap: 16,
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
             <SidebarTrigger />
-            <Separator orientation="vertical" className="h-5" />
-            <div>
-              <p className="text-sm font-medium">Learning Hub Mini</p>
-              <p className="text-xs text-muted-foreground">Hello, {currentUser.name}</p>
+            <span
+              style={{
+                width: 1,
+                height: 20,
+                background: "var(--lh-border)",
+                flexShrink: 0,
+              }}
+            />
+            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              {[
+                { id: "dashboard", label: "Dashboard" },
+                { id: "tasks", label: "Tasks" },
+                { id: "notes", label: "Notes" },
+                { id: "assistant", label: "Assistant" },
+              ].map((section, i) => (
+                <span key={section.id} style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                  {i > 0 && (
+                    <span style={{ color: "var(--lh-muted-2)", fontSize: 12 }}>/</span>
+                  )}
+                  <button
+                    onClick={() => setActiveSection(section.id as import("@/features/learning-hub/types").AppSection)}
+                    style={{
+                      background: "none",
+                      border: "none",
+                      padding: "2px 4px",
+                      fontSize: 13,
+                      fontWeight: section.id === activeSection ? 600 : 400,
+                      color: section.id === activeSection ? "var(--lh-ink)" : "var(--lh-muted)",
+                      cursor: "pointer",
+                      fontFamily: "var(--lh-font-sans)",
+                    }}
+                  >
+                    {section.label}
+                  </button>
+                </span>
+              ))}
             </div>
           </div>
-          <div className="hidden items-center gap-2 sm:flex">
-            <Badge variant="outline">{taskStats.pending} pending</Badge>
-            <Button size="sm" onClick={() => setActiveSection("tasks")}>
-              <PlusIcon />
-              New task
-            </Button>
+
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            {taskStats.pending > 0 && (
+              <span
+                style={{
+                  fontSize: 12,
+                  fontWeight: 500,
+                  color: "var(--lh-accent-ink)",
+                  background: "var(--lh-accent-bg)",
+                  border: "1px solid var(--lh-accent-border)",
+                  borderRadius: 999,
+                  padding: "3px 10px",
+                }}
+              >
+                {taskStats.pending} pending
+              </span>
+            )}
+            <span style={{ fontSize: 13, color: "var(--lh-muted)" }}>
+              {currentUser.name}
+            </span>
           </div>
         </header>
 

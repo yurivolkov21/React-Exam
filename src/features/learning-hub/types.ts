@@ -10,6 +10,8 @@ export type UserProfile = {
   avatar: string;
 };
 
+export type KanbanStatus = "pending" | "in-progress" | "done";
+
 export type StudyTask = {
   id: string;
   title: string;
@@ -17,6 +19,7 @@ export type StudyTask = {
   priority: TaskPriority;
   dueDate: string;
   completed: boolean;
+  kanbanStatus?: KanbanStatus;
   createdAt: string;
   updatedAt: string;
 };

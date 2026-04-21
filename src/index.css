@@ -6,115 +6,155 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  --text: #6b6375;
-  --text-h: #08060d;
-  --bg: #fff;
-  --border: oklch(0.922 0 0);
-  --code-bg: #f4f3ec;
-  --accent: oklch(0.97 0 0);
-  --accent-bg: rgba(170, 59, 255, 0.1);
-  --accent-border: rgba(170, 59, 255, 0.5);
-  --social-bg: rgba(244, 243, 236, 0.5);
-  --shadow:
-    rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
+  /* ── Learning Hub Design Tokens ── */
 
-  --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --mono: ui-monospace, Consolas, monospace;
+  /* Neutrals (stone-tinted) */
+  --lh-bg: #fbfaf8;
+  --lh-surface: #ffffff;
+  --lh-surface-2: #f6f4f0;
+  --lh-surface-3: #efece6;
+  --lh-border: #e8e4dc;
+  --lh-border-strong: #d9d3c7;
+  --lh-ink: #1a1815;
+  --lh-ink-2: #3d3833;
+  --lh-muted: #78716c;
+  --lh-muted-2: #a8a29e;
 
-  font: 18px/145% var(--sans);
-  letter-spacing: 0.18px;
-  color-scheme: light dark;
-  color: var(--text);
-  background: var(--bg);
+  /* Accent — warm terracotta */
+  --lh-accent: #d97757;
+  --lh-accent-ink: #b35a3d;
+  --lh-accent-bg: #fdf3ee;
+  --lh-accent-border: #f4d4c3;
+
+  /* Semantic */
+  --lh-success: #4d7c4a;
+  --lh-success-bg: #eef4ea;
+  --lh-warning: #b78a2e;
+  --lh-warning-bg: #faf3e0;
+  --lh-danger: #b4452e;
+  --lh-danger-bg: #fbeee8;
+
+  /* Priority */
+  --lh-p-high: #b4452e;
+  --lh-p-med: #b78a2e;
+  --lh-p-low: #6b7866;
+
+  /* Subject colors */
+  --lh-subj-react: #3b6f87;
+  --lh-subj-ts: #4464a1;
+  --lh-subj-ui: #9a5f8c;
+  --lh-subj-test: #5f8a5d;
+  --lh-subj-algo: #a1673b;
+
+  /* Shadows */
+  --lh-sh-sm: 0 1px 2px rgba(26, 24, 21, 0.05);
+  --lh-sh-md: 0 2px 4px rgba(26, 24, 21, 0.04), 0 4px 12px rgba(26, 24, 21, 0.05);
+  --lh-sh-lg: 0 4px 12px rgba(26, 24, 21, 0.06), 0 12px 32px rgba(26, 24, 21, 0.08);
+
+  /* Radius */
+  --lh-r-xs: 6px;
+  --lh-r-sm: 8px;
+  --lh-r-md: 10px;
+  --lh-r-lg: 14px;
+  --lh-r-xl: 20px;
+
+  /* Typography */
+  --lh-font-sans: "Inter Variable", "Inter", ui-sans-serif, system-ui, sans-serif;
+  --lh-font-display: "Fraunces", ui-serif, Georgia, serif;
+  --lh-font-mono: "JetBrains Mono", ui-monospace, monospace;
+
+  /* ── shadcn/ui tokens (mapped to Learning Hub palette) ── */
+  --background: #fbfaf8;
+  --foreground: #1a1815;
+  --card: #ffffff;
+  --card-foreground: #1a1815;
+  --popover: #ffffff;
+  --popover-foreground: #1a1815;
+  --primary: #1a1815;
+  --primary-foreground: #ffffff;
+  --secondary: #f6f4f0;
+  --secondary-foreground: #1a1815;
+  --muted: #f6f4f0;
+  --muted-foreground: #78716c;
+  --accent: #f6f4f0;
+  --accent-foreground: #1a1815;
+  --destructive: #b4452e;
+  --border: #e8e4dc;
+  --input: #d9d3c7;
+  --ring: #d97757;
+
+  --chart-1: #d97757;
+  --chart-2: #3b6f87;
+  --chart-3: #4464a1;
+  --chart-4: #9a5f8c;
+  --chart-5: #5f8a5d;
+
+  --radius: 0.5rem;
+
+  --sidebar: #f6f4f0;
+  --sidebar-foreground: #1a1815;
+  --sidebar-primary: #1a1815;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #efece6;
+  --sidebar-accent-foreground: #1a1815;
+  --sidebar-border: #e8e4dc;
+  --sidebar-ring: #d97757;
+
+  font: 14px/1.5 var(--lh-font-sans);
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11", "ss01";
+  letter-spacing: 0;
+  color: var(--lh-ink);
+  background: var(--lh-bg);
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-
-  @media (max-width: 1024px) {
-    font-size: 16px;
-  }
-
-  --background: oklch(1 0 0);
-
-  --foreground: oklch(0.145 0 0);
-
-  --card: oklch(1 0 0);
-
-  --card-foreground: oklch(0.145 0 0);
-
-  --popover: oklch(1 0 0);
-
-  --popover-foreground: oklch(0.145 0 0);
-
-  --primary: oklch(0.205 0 0);
-
-  --primary-foreground: oklch(0.985 0 0);
-
-  --secondary: oklch(0.97 0 0);
-
-  --secondary-foreground: oklch(0.205 0 0);
-
-  --muted: oklch(0.97 0 0);
-
-  --muted-foreground: oklch(0.556 0 0);
-
-  --accent-foreground: oklch(0.205 0 0);
-
-  --destructive: oklch(0.577 0.245 27.325);
-
-  --input: oklch(0.922 0 0);
-
-  --ring: oklch(0.708 0 0);
-
-  --chart-1: oklch(0.87 0 0);
-
-  --chart-2: oklch(0.556 0 0);
-
-  --chart-3: oklch(0.439 0 0);
-
-  --chart-4: oklch(0.371 0 0);
-
-  --chart-5: oklch(0.269 0 0);
-
-  --radius: 0.625rem;
-
-  --sidebar: oklch(0.985 0 0);
-
-  --sidebar-foreground: oklch(0.145 0 0);
-
-  --sidebar-primary: oklch(0.205 0 0);
-
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-
-  --sidebar-accent: oklch(0.97 0 0);
-
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-
-  --sidebar-border: oklch(0.922 0 0);
-
-  --sidebar-ring: oklch(0.708 0 0)
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --text: #9ca3af;
-    --text-h: #f3f4f6;
-    --bg: #16171d;
-    --border: #2e303a;
-    --code-bg: #1f2028;
-    --accent: #c084fc;
-    --accent-bg: rgba(192, 132, 252, 0.15);
-    --accent-border: rgba(192, 132, 252, 0.5);
-    --social-bg: rgba(47, 48, 58, 0.5);
-    --shadow:
-      rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
-  }
+/* Dark mode — adapted Learning Hub palette */
+.dark {
+  --lh-bg: #141210;
+  --lh-surface: #1e1b18;
+  --lh-surface-2: #252118;
+  --lh-surface-3: #2e2921;
+  --lh-border: #38322a;
+  --lh-border-strong: #4a4238;
+  --lh-ink: #f5f0e8;
+  --lh-ink-2: #d4ccbf;
+  --lh-muted: #9b9084;
+  --lh-muted-2: #6b6258;
+  --lh-accent: #e08a68;
+  --lh-accent-ink: #f4a882;
+  --lh-accent-bg: #2a1e18;
+  --lh-accent-border: #4a2e22;
 
-  #social .button-icon {
-    filter: invert(1) brightness(2);
-  }
+  --background: #141210;
+  --foreground: #f5f0e8;
+  --card: #1e1b18;
+  --card-foreground: #f5f0e8;
+  --popover: #1e1b18;
+  --popover-foreground: #f5f0e8;
+  --primary: #f5f0e8;
+  --primary-foreground: #1a1815;
+  --secondary: #252118;
+  --secondary-foreground: #f5f0e8;
+  --muted: #252118;
+  --muted-foreground: #9b9084;
+  --accent: #252118;
+  --accent-foreground: #f5f0e8;
+  --destructive: #e06049;
+  --border: #38322a;
+  --input: #4a4238;
+  --ring: #e08a68;
+
+  --sidebar: #1e1b18;
+  --sidebar-foreground: #f5f0e8;
+  --sidebar-primary: #f5f0e8;
+  --sidebar-primary-foreground: #1a1815;
+  --sidebar-accent: #2e2921;
+  --sidebar-accent-foreground: #f5f0e8;
+  --sidebar-border: #38322a;
+  --sidebar-ring: #e08a68;
 }
 
 #root {
@@ -122,7 +162,6 @@
   max-width: 100%;
   margin: 0;
   text-align: left;
-  border-inline: none;
   min-height: 100svh;
   display: block;
   box-sizing: border-box;
@@ -132,53 +171,20 @@ body {
   margin: 0;
 }
 
-h1,
-h2 {
-  font-family: var(--heading);
-  font-weight: 500;
-  color: var(--text-h);
+/* ── Scrollbar styling ── */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: var(--lh-border-strong);
+  border-radius: 10px;
+  border: 2px solid var(--lh-bg);
 }
-
-h1 {
-  font-size: 56px;
-  letter-spacing: -1.68px;
-  margin: 32px 0;
-  @media (max-width: 1024px) {
-    font-size: 36px;
-    margin: 20px 0;
-  }
-}
-h2 {
-  font-size: 24px;
-  line-height: 118%;
-  letter-spacing: -0.24px;
-  margin: 0 0 8px;
-  @media (max-width: 1024px) {
-    font-size: 20px;
-  }
-}
-p {
-  margin: 0;
-}
-
-code,
-.counter {
-  font-family: var(--mono);
-  display: inline-flex;
-  border-radius: 4px;
-  color: var(--text-h);
-}
-
-code {
-  font-size: 15px;
-  line-height: 135%;
-  padding: 4px 8px;
-  background: var(--code-bg);
-}
+::-webkit-scrollbar-thumb:hover { background: var(--lh-muted-2); }
 
 @theme inline {
-  --font-heading: var(--font-sans);
-  --font-sans: 'Inter Variable', sans-serif;
+  --font-sans: var(--lh-font-sans);
+  --font-display: var(--lh-font-display);
+  --font-mono: var(--lh-font-mono);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -219,44 +225,72 @@ code {
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
-.dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
-}
-
 @layer base {
   * {
-    @apply border-border outline-ring/50;}
+    @apply border-border outline-ring/50;
+  }
   body {
-    @apply bg-background text-foreground;}
+    @apply bg-background text-foreground;
+  }
   html {
-    @apply font-sans;}}
+    @apply font-sans;
+  }
+}
+
+/* ── Responsive dashboard grid ── */
+@media (max-width: 1100px) {
+  .lh-dash-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* ── Responsive kanban grid ── */
+@media (max-width: 900px) {
+  .lh-kanban-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* ── Auth split responsive ── */
+@media (max-width: 960px) {
+  .hidden.md\:flex {
+    display: none !important;
+  }
+  .auth-form-panel {
+    grid-column: 1 / -1;
+  }
+}
+
+/* ── Learning Hub skeleton animation ── */
+@keyframes lh-skel {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.lh-skel {
+  background: linear-gradient(90deg, var(--lh-surface-2), var(--lh-surface-3), var(--lh-surface-2));
+  background-size: 200% 100%;
+  animation: lh-skel 1.4s ease-in-out infinite;
+}
+
+/* ── Dialog / overlay animations ── */
+@keyframes lh-overlay-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes lh-dialog-in {
+  from { transform: translate(-50%, -48%) scale(0.98); opacity: 0; }
+  to { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+}
+
+@keyframes lh-toast-in {
+  from { transform: translateY(-8px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+/* ── Progress ring animation ── */
+@keyframes lh-ring-fill {
+  from { stroke-dashoffset: var(--lh-ring-full); }
+  to { stroke-dashoffset: var(--lh-ring-offset); }
+}
