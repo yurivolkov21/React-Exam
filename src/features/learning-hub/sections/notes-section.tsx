@@ -24,37 +24,31 @@ export function NotesSection({
   onDeleteNote,
   onResetCorruptedNotesStorage,
 }: NotesSectionProps) {
-  const inputFocus = (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    e.target.style.borderColor = "var(--lh-accent)";
-    e.target.style.boxShadow = "0 0 0 3px var(--lh-accent-bg)";
-  };
-  const inputBlur = (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    e.target.style.borderColor = "transparent";
-    e.target.style.boxShadow = "none";
-  };
+  const charCount = noteContentInput.length;
 
   return (
-    <div style={{ padding: "24px 28px 40px", maxWidth: 1360, margin: "0 auto" }}>
-      {/* Section head */}
+    <div style={{ padding: "28px 28px 40px", maxWidth: 1360, margin: "0 auto" }}>
+      {/* ── Section head ── */}
       <div style={{ marginBottom: 24 }}>
         <h1
           style={{
             fontFamily: "var(--lh-font-display)",
-            fontSize: 22,
+            fontSize: 28,
             fontWeight: 500,
             color: "var(--lh-ink)",
-            letterSpacing: "-0.02em",
-            margin: 0,
+            letterSpacing: "-0.03em",
+            margin: "0 0 6px",
+            lineHeight: 1.15,
           }}
         >
-          Study Notes
+          Notes
         </h1>
-        <p style={{ margin: "4px 0 0", fontSize: 13, color: "var(--lh-muted)" }}>
-          {notes.length} note{notes.length !== 1 ? "s" : ""} saved
+        <p style={{ margin: 0, fontSize: 13.5, color: "var(--lh-muted)" }}>
+          Quick thoughts, patterns, and reminders — persisted locally.
         </p>
       </div>
 
-      {/* Corrupted storage warning */}
+      {/* ── Corrupted storage warning ── */}
       {!canPersistNotes && (
         <div
           style={{
@@ -93,14 +87,14 @@ export function NotesSection({
         </div>
       )}
 
-      {/* Composer */}
+      {/* ── Composer ── */}
       <div
         style={{
           background: "var(--lh-surface)",
           border: "1px solid var(--lh-border)",
           borderRadius: "var(--lh-r-lg)",
-          padding: 16,
-          marginBottom: 24,
+          padding: "18px 20px",
+          marginBottom: 28,
           boxShadow: "var(--lh-sh-sm)",
         }}
       >
@@ -115,20 +109,21 @@ export function NotesSection({
               border: "none",
               borderBottom: "1px solid var(--lh-border)",
               outline: "none",
-              padding: "0 0 10px",
-              marginBottom: 10,
+              padding: "0 0 12px",
+              marginBottom: 12,
               fontSize: 15,
               fontWeight: 600,
               color: "var(--lh-ink)",
               fontFamily: "var(--lh-font-sans)",
-              transition: "border-color 0.12s, box-shadow 0.12s",
+              transition: "border-color 0.12s",
               boxSizing: "border-box",
+              width: "100%",
             }}
             onFocus={(e) => { e.target.style.borderColor = "var(--lh-accent)"; }}
             onBlur={(e) => { e.target.style.borderColor = "var(--lh-border)"; }}
           />
           <textarea
-            placeholder="Write your study note here..."
+            placeholder="Write your note... support for multiline."
             value={noteContentInput}
             onChange={(e) => onNoteContentInputChange(e.target.value)}
             disabled={!canPersistNotes}
@@ -141,31 +136,39 @@ export function NotesSection({
               fontSize: 13.5,
               color: "var(--lh-ink)",
               fontFamily: "var(--lh-font-sans)",
-              lineHeight: 1.6,
+              lineHeight: 1.65,
               marginBottom: 12,
               padding: 0,
-              transition: "border-color 0.12s, box-shadow 0.12s",
+              width: "100%",
+              boxSizing: "border-box",
             }}
-            onFocus={inputFocus}
-            onBlur={inputBlur}
           />
           <div
             style={{
               display: "flex",
               alignItems: "center",
-              justifyContent: "flex-end",
+              justifyContent: "space-between",
               gap: 8,
               paddingTop: 12,
               borderTop: "1px solid var(--lh-border)",
             }}
           >
+            <span
+              style={{
+                fontSize: 12,
+                color: "var(--lh-muted-2)",
+                fontVariantNumeric: "tabular-nums",
+              }}
+            >
+              {charCount} chars
+            </span>
             <button
               type="submit"
               disabled={!canPersistNotes}
               style={{
                 height: 34,
                 padding: "0 14px",
-                background: canPersistNotes ? "var(--lh-ink)" : "var(--lh-surface-3)",
+                background: canPersistNotes ? "var(--lh-accent)" : "var(--lh-surface-3)",
                 color: canPersistNotes ? "#fff" : "var(--lh-muted-2)",
                 border: "none",
                 borderRadius: "var(--lh-r-sm)",
@@ -173,20 +176,27 @@ export function NotesSection({
                 fontWeight: 500,
                 cursor: canPersistNotes ? "pointer" : "not-allowed",
                 fontFamily: "var(--lh-font-sans)",
+                transition: "background 0.12s",
+              }}
+              onMouseEnter={(e) => {
+                if (canPersistNotes) e.currentTarget.style.background = "var(--lh-accent-ink)";
+              }}
+              onMouseLeave={(e) => {
+                if (canPersistNotes) e.currentTarget.style.background = "var(--lh-accent)";
               }}
             >
-              Save note
+              + Add note
             </button>
           </div>
         </form>
       </div>
 
-      {/* Notes grid */}
+      {/* ── Notes grid ── */}
       {notes.length === 0 ? (
         <div
           style={{
             textAlign: "center",
-            padding: "48px 24px",
+            padding: "56px 24px",
             color: "var(--lh-muted-2)",
           }}
         >
@@ -209,7 +219,15 @@ export function NotesSection({
           <p style={{ margin: 0, fontSize: 14, fontWeight: 600, color: "var(--lh-ink)" }}>
             No notes yet
           </p>
-          <p style={{ margin: "6px 0 0", fontSize: 12.5, maxWidth: 280, marginLeft: "auto", marginRight: "auto" }}>
+          <p
+            style={{
+              margin: "6px 0 0",
+              fontSize: 12.5,
+              maxWidth: 280,
+              marginLeft: "auto",
+              marginRight: "auto",
+            }}
+          >
             Use the composer above to capture your first study note.
           </p>
         </div>
@@ -244,12 +262,7 @@ export function NotesSection({
               }}
             >
               {/* Card header */}
-              <div
-                style={{
-                  padding: "14px 16px 10px",
-                  borderBottom: "1px solid var(--lh-border)",
-                }}
-              >
+              <div style={{ padding: "14px 16px 10px" }}>
                 <h3
                   style={{
                     margin: 0,
@@ -261,23 +274,10 @@ export function NotesSection({
                 >
                   {note.title}
                 </h3>
-                <p
-                  style={{
-                    margin: "3px 0 0",
-                    fontSize: 11,
-                    color: "var(--lh-muted-2)",
-                  }}
-                >
-                  {new Date(note.updatedAt).toLocaleDateString("en", {
-                    month: "short",
-                    day: "numeric",
-                    year: "numeric",
-                  })}
-                </p>
               </div>
 
               {/* Card body */}
-              <div style={{ padding: "10px 16px", flex: 1 }}>
+              <div style={{ padding: "4px 16px 14px", flex: 1 }}>
                 <p
                   style={{
                     margin: 0,
@@ -297,31 +297,42 @@ export function NotesSection({
               {/* Card footer */}
               <div
                 style={{
-                  padding: "8px 16px",
+                  padding: "10px 16px",
                   borderTop: "1px solid var(--lh-border)",
                   display: "flex",
-                  justifyContent: "flex-end",
+                  alignItems: "center",
+                  justifyContent: "space-between",
                 }}
               >
+                <span style={{ fontSize: 11, color: "var(--lh-muted-2)" }}>
+                  Updated{" "}
+                  {new Date(note.updatedAt).toLocaleDateString("en", {
+                    month: "numeric",
+                    day: "numeric",
+                    year: "numeric",
+                  })}
+                </span>
                 <button
                   disabled={!canPersistNotes}
                   onClick={() => onDeleteNote(note.id)}
                   style={{
-                    height: 26,
-                    padding: "0 10px",
+                    height: 24,
+                    padding: "0 9px",
                     background: "transparent",
                     border: "1px solid var(--lh-border)",
                     borderRadius: "var(--lh-r-xs)",
-                    fontSize: 12,
+                    fontSize: 11.5,
                     fontWeight: 500,
                     color: "var(--lh-danger)",
-                    cursor: "pointer",
+                    cursor: canPersistNotes ? "pointer" : "not-allowed",
                     fontFamily: "var(--lh-font-sans)",
                     transition: "background 0.12s, border-color 0.12s",
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.background = "var(--lh-danger-bg)";
-                    e.currentTarget.style.borderColor = "#ecc9bd";
+                    if (canPersistNotes) {
+                      e.currentTarget.style.background = "var(--lh-danger-bg)";
+                      e.currentTarget.style.borderColor = "#ecc9bd";
+                    }
                   }}
                   onMouseLeave={(e) => {
                     e.currentTarget.style.background = "transparent";

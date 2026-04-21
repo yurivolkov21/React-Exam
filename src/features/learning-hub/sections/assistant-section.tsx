@@ -24,27 +24,28 @@ export function AssistantSection({
   }, [assistantMessages]);
 
   return (
-    <div style={{ padding: "24px 28px 40px", maxWidth: 900, margin: "0 auto" }}>
-      {/* Section head */}
+    <div style={{ padding: "28px 28px 40px", maxWidth: 900, margin: "0 auto" }}>
+      {/* ── Section head ── */}
       <div style={{ marginBottom: 20 }}>
         <h1
           style={{
             fontFamily: "var(--lh-font-display)",
-            fontSize: 22,
+            fontSize: 28,
             fontWeight: 500,
             color: "var(--lh-ink)",
-            letterSpacing: "-0.02em",
-            margin: 0,
+            letterSpacing: "-0.03em",
+            margin: "0 0 6px",
+            lineHeight: 1.15,
           }}
         >
           Study Assistant
         </h1>
-        <p style={{ margin: "4px 0 0", fontSize: 13, color: "var(--lh-muted)" }}>
+        <p style={{ margin: 0, fontSize: 13.5, color: "var(--lh-muted)" }}>
           Frontend-only mock assistant — no AI backend required.
         </p>
       </div>
 
-      {/* Chat shell */}
+      {/* ── Chat shell ── */}
       <div
         style={{
           background: "var(--lh-surface)",
@@ -60,7 +61,7 @@ export function AssistantSection({
         {/* Chat head */}
         <div
           style={{
-            padding: "14px 18px",
+            padding: "14px 20px",
             borderBottom: "1px solid var(--lh-border)",
             display: "flex",
             alignItems: "center",
@@ -82,7 +83,7 @@ export function AssistantSection({
               color: "#fff",
             }}
           >
-            S
+            L
           </div>
           <div>
             <p style={{ margin: 0, fontSize: 13.5, fontWeight: 600, color: "var(--lh-ink)" }}>
@@ -98,11 +99,11 @@ export function AssistantSection({
         <div
           style={{
             flex: 1,
-            padding: "20px 22px",
+            padding: "24px 24px 12px",
             overflowY: "auto",
             display: "flex",
             flexDirection: "column",
-            gap: 18,
+            gap: 20,
           }}
         >
           {assistantMessages.map((message) => {
@@ -112,47 +113,70 @@ export function AssistantSection({
                 key={message.id}
                 style={{
                   display: "flex",
-                  gap: 10,
-                  alignItems: "flex-start",
-                  flexDirection: isBot ? "row" : "row-reverse",
+                  flexDirection: "column",
+                  alignItems: isBot ? "flex-start" : "flex-end",
+                  gap: 4,
                 }}
               >
-                {/* Avatar */}
-                <div
+                {/* Label */}
+                <span
                   style={{
-                    width: 28,
-                    height: 28,
-                    borderRadius: 8,
-                    background: isBot ? "var(--lh-ink)" : "var(--lh-accent)",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    fontSize: 11,
+                    fontSize: 10,
                     fontWeight: 600,
-                    color: "#fff",
-                    flexShrink: 0,
-                    fontFamily: isBot ? "var(--lh-font-display)" : "var(--lh-font-sans)",
+                    color: "var(--lh-muted-2)",
+                    letterSpacing: "0.08em",
+                    textTransform: "uppercase",
+                    paddingLeft: isBot ? 2 : 0,
+                    paddingRight: isBot ? 0 : 2,
                   }}
                 >
-                  {isBot ? "S" : "Y"}
-                </div>
+                  {isBot ? "Assistant" : "You"}
+                </span>
 
-                {/* Bubble */}
+                {/* Bubble row */}
                 <div
                   style={{
-                    maxWidth: "72%",
-                    background: isBot ? "var(--lh-surface-2)" : "var(--lh-ink)",
-                    color: isBot ? "var(--lh-ink)" : "#fbfaf8",
-                    border: isBot ? "1px solid var(--lh-border)" : "none",
-                    borderRadius: isBot
-                      ? "4px 12px 12px 12px"
-                      : "12px 4px 12px 12px",
-                    padding: "10px 14px",
-                    fontSize: 13.5,
-                    lineHeight: 1.55,
+                    display: "flex",
+                    gap: 10,
+                    alignItems: "flex-end",
+                    flexDirection: isBot ? "row" : "row-reverse",
                   }}
                 >
-                  {message.content}
+                  {/* Avatar */}
+                  <div
+                    style={{
+                      width: 28,
+                      height: 28,
+                      borderRadius: 8,
+                      background: isBot ? "var(--lh-ink)" : "var(--lh-accent)",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      fontSize: 11,
+                      fontWeight: 600,
+                      color: "#fff",
+                      flexShrink: 0,
+                      fontFamily: isBot ? "var(--lh-font-display)" : "var(--lh-font-sans)",
+                    }}
+                  >
+                    {isBot ? "L" : "Y"}
+                  </div>
+
+                  {/* Bubble */}
+                  <div
+                    style={{
+                      maxWidth: "72%",
+                      background: isBot ? "var(--lh-surface-2)" : "var(--lh-ink)",
+                      color: isBot ? "var(--lh-ink)" : "#fbfaf8",
+                      border: isBot ? "1px solid var(--lh-border)" : "none",
+                      borderRadius: isBot ? "4px 12px 12px 12px" : "12px 4px 12px 12px",
+                      padding: "10px 14px",
+                      fontSize: 13.5,
+                      lineHeight: 1.55,
+                    }}
+                  >
+                    {message.content}
+                  </div>
                 </div>
               </div>
             );
@@ -160,72 +184,28 @@ export function AssistantSection({
           <div ref={messagesEndRef} />
         </div>
 
-        {/* Hint pills */}
-        <div
-          style={{
-            padding: "0 22px 12px",
-            display: "flex",
-            gap: 6,
-            flexWrap: "wrap",
-          }}
-        >
-          {ASSISTANT_HINTS.map((hint) => (
-            <button
-              key={hint}
-              type="button"
-              onClick={() => onAssistantInputChange(hint)}
-              style={{
-                height: 26,
-                padding: "0 10px",
-                background: "var(--lh-surface-2)",
-                border: "1px solid var(--lh-border)",
-                borderRadius: 999,
-                fontSize: 12,
-                fontWeight: 500,
-                color: "var(--lh-ink-2)",
-                cursor: "pointer",
-                fontFamily: "var(--lh-font-sans)",
-                transition: "background 0.12s, border-color 0.12s",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = "var(--lh-surface-3)";
-                e.currentTarget.style.borderColor = "var(--lh-border-strong)";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = "var(--lh-surface-2)";
-                e.currentTarget.style.borderColor = "var(--lh-border)";
-              }}
-            >
-              {hint}
-            </button>
-          ))}
-        </div>
-
         {/* Input row */}
         <div
           style={{
             borderTop: "1px solid var(--lh-border)",
-            padding: "12px 18px",
-            display: "flex",
-            gap: 10,
-            alignItems: "center",
+            padding: "14px 20px",
           }}
         >
           <form
             onSubmit={onSubmitAssistantPrompt}
-            style={{ display: "flex", flex: 1, gap: 10, alignItems: "center" }}
+            style={{ display: "flex", gap: 10, alignItems: "center" }}
           >
             <input
               value={assistantInput}
               onChange={(e) => onAssistantInputChange(e.target.value)}
-              placeholder="Ask the study assistant..."
+              placeholder="Ask anything about your study plan..."
               style={{
                 flex: 1,
-                height: 38,
+                height: 40,
                 padding: "0 14px",
                 background: "var(--lh-surface-2)",
                 border: "1px solid var(--lh-border)",
-                borderRadius: "var(--lh-r-sm)",
+                borderRadius: "var(--lh-r-md)",
                 fontSize: 13.5,
                 color: "var(--lh-ink)",
                 outline: "none",
@@ -241,28 +221,72 @@ export function AssistantSection({
                 e.target.style.boxShadow = "none";
               }}
             />
+            {/* Circle send button */}
             <button
               type="submit"
               style={{
-                height: 38,
-                padding: "0 16px",
-                background: "var(--lh-ink)",
+                width: 40,
+                height: 40,
+                borderRadius: "50%",
+                background: "var(--lh-accent)",
                 color: "#fff",
                 border: "none",
-                borderRadius: "var(--lh-r-sm)",
-                fontSize: 13.5,
-                fontWeight: 500,
                 cursor: "pointer",
-                fontFamily: "var(--lh-font-sans)",
-                transition: "background 0.12s",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
                 flexShrink: 0,
+                transition: "background 0.12s",
               }}
-              onMouseEnter={(e) => { e.currentTarget.style.background = "var(--lh-ink-2)"; }}
-              onMouseLeave={(e) => { e.currentTarget.style.background = "var(--lh-ink)"; }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = "var(--lh-accent-ink)"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = "var(--lh-accent)"; }}
             >
-              Send
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                <path d="M14 8H2M14 8l-5-5M14 8l-5 5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
             </button>
           </form>
+
+          {/* Hint pills */}
+          <div
+            style={{
+              display: "flex",
+              gap: 6,
+              flexWrap: "wrap",
+              marginTop: 10,
+            }}
+          >
+            {ASSISTANT_HINTS.map((hint) => (
+              <button
+                key={hint}
+                type="button"
+                onClick={() => onAssistantInputChange(hint)}
+                style={{
+                  height: 26,
+                  padding: "0 10px",
+                  background: "var(--lh-surface-2)",
+                  border: "1px solid var(--lh-border)",
+                  borderRadius: 999,
+                  fontSize: 12,
+                  fontWeight: 500,
+                  color: "var(--lh-ink-2)",
+                  cursor: "pointer",
+                  fontFamily: "var(--lh-font-sans)",
+                  transition: "background 0.12s, border-color 0.12s",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = "var(--lh-surface-3)";
+                  e.currentTarget.style.borderColor = "var(--lh-border-strong)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = "var(--lh-surface-2)";
+                  e.currentTarget.style.borderColor = "var(--lh-border)";
+                }}
+              >
+                {hint}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
     </div>

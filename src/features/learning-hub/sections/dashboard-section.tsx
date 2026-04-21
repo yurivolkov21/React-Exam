@@ -13,7 +13,8 @@ type DashboardSectionProps = {
     dueToday: number;
   };
   visibleTasks: StudyTask[];
-  currentUserName?: string;
+  streak: number;
+  onOpenNewTask?: () => void;
   onNavigateToTasks?: () => void;
 };
 
@@ -24,41 +25,39 @@ const CARD_STYLE: React.CSSProperties = {
   boxShadow: "var(--lh-sh-sm)",
 };
 
-const SECTION_TITLE_STYLE: React.CSSProperties = {
-  fontFamily: "var(--lh-font-display)",
-  fontSize: 22,
-  fontWeight: 500,
-  color: "var(--lh-ink)",
-  letterSpacing: "-0.02em",
-  margin: 0,
+const PRIORITY_COLOR: Record<string, string> = {
+  high: "var(--lh-p-high)",
+  medium: "var(--lh-p-med)",
+  low: "var(--lh-p-low)",
 };
 
 export function DashboardSection({
   taskStats,
   visibleTasks,
-  currentUserName,
+  streak,
+  onOpenNewTask,
   onNavigateToTasks,
 }: DashboardSectionProps) {
   const todayTasks = useMemo(() => {
     const today = new Date().toISOString().slice(0, 10);
-    return visibleTasks.filter((t) => t.dueDate === today || !t.completed).slice(0, 6);
+    return visibleTasks
+      .filter((t) => !t.completed || t.dueDate === today)
+      .slice(0, 6);
   }, [visibleTasks]);
 
   const weekData = useMemo(() => {
     const today = new Date();
     const days: { label: string; count: number; isToday: boolean }[] = [];
-
     for (let i = 6; i >= 0; i--) {
       const d = new Date(today);
       d.setDate(today.getDate() - i);
       const dayStr = d.toISOString().slice(0, 10);
-      const label = d.toLocaleDateString("en", { weekday: "short" }).slice(0, 2);
+      const label = d.toLocaleDateString("en", { weekday: "short" }).slice(0, 1);
       const count = visibleTasks.filter(
         (t) => t.completed && t.updatedAt?.slice(0, 10) === dayStr,
       ).length;
       days.push({ label, count, isToday: i === 0 });
     }
-
     return days;
   }, [visibleTasks]);
 
@@ -76,66 +75,46 @@ export function DashboardSection({
     });
   }, [visibleTasks]);
 
-  const streak = useMemo(() => {
-    const today = new Date();
-    let count = 0;
-    for (let i = 0; i < 30; i++) {
-      const d = new Date(today);
-      d.setDate(today.getDate() - i);
-      const dayStr = d.toISOString().slice(0, 10);
-      const hadActivity = visibleTasks.some(
-        (t) => t.completed && t.updatedAt?.slice(0, 10) === dayStr,
-      );
-      if (hadActivity) {
-        count++;
-      } else if (i > 0) {
-        break;
-      }
-    }
-    return count;
-  }, [visibleTasks]);
-
-  const greeting = useMemo(() => {
-    const h = new Date().getHours();
-    if (h < 12) return "Good morning";
-    if (h < 17) return "Good afternoon";
-    return "Good evening";
-  }, []);
+  const weekTotal = weekData.reduce((sum, d) => sum + d.count, 0);
 
   return (
-    <div style={{ padding: "24px 28px 40px", maxWidth: 1360, margin: "0 auto" }}>
-      {/* Section head */}
+    <div style={{ padding: "28px 28px 40px", maxWidth: 1360, margin: "0 auto" }}>
+      {/* ── Section head ── */}
       <div
         style={{
           display: "flex",
           alignItems: "flex-start",
           justifyContent: "space-between",
           gap: 16,
-          marginBottom: 24,
+          marginBottom: 28,
         }}
       >
         <div>
-          <h1 style={SECTION_TITLE_STYLE}>
-            {greeting}{currentUserName ? `, ${currentUserName}` : ""}.
-          </h1>
-          <p
+          <h1
             style={{
-              margin: "4px 0 0",
-              fontSize: 13,
-              color: "var(--lh-muted)",
+              fontFamily: "var(--lh-font-display)",
+              fontSize: 28,
+              fontWeight: 500,
+              color: "var(--lh-ink)",
+              letterSpacing: "-0.03em",
+              margin: "0 0 6px",
+              lineHeight: 1.15,
             }}
           >
-            {taskStats.pending > 0
-              ? `You have ${taskStats.pending} pending task${taskStats.pending !== 1 ? "s" : ""} today.`
-              : "All tasks are done. Great work!"}
+            Your study, at a glance.
+          </h1>
+          <p style={{ margin: 0, fontSize: 13.5, color: "var(--lh-muted)" }}>
+            {streak > 0
+              ? `You're on a ${streak}-day streak — keep the tempo going.`
+              : "Start a task today to begin your streak."}
           </p>
         </div>
 
         <button
-          onClick={onNavigateToTasks}
+          onClick={onOpenNewTask}
           style={{
             height: 36,
-            padding: "0 14px",
+            padding: "0 16px",
             background: "var(--lh-accent)",
             color: "#fff",
             border: "none",
@@ -151,11 +130,11 @@ export function DashboardSection({
           onMouseEnter={(e) => { e.currentTarget.style.background = "var(--lh-accent-ink)"; }}
           onMouseLeave={(e) => { e.currentTarget.style.background = "var(--lh-accent)"; }}
         >
-          + New Task
+          + New task
         </button>
       </div>
 
-      {/* Main 2-column grid */}
+      {/* ── 2-column grid ── */}
       <div
         style={{
           display: "grid",
@@ -164,11 +143,19 @@ export function DashboardSection({
         }}
         className="lh-dash-grid"
       >
-        {/* Left column */}
+        {/* ── Left column ── */}
         <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+
           {/* Progress card */}
-          <div style={{ ...CARD_STYLE, padding: 20 }}>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
+          <div style={{ ...CARD_STYLE, padding: 24 }}>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                marginBottom: 20,
+              }}
+            >
               <div>
                 <h2
                   style={{
@@ -178,15 +165,90 @@ export function DashboardSection({
                     color: "var(--lh-ink)",
                   }}
                 >
-                  Learning Progress
+                  Learning progress
                 </h2>
                 <p style={{ margin: "3px 0 0", fontSize: 12.5, color: "var(--lh-muted)" }}>
-                  {taskStats.completed} of {taskStats.total} tasks completed
+                  {taskStats.completed} of {taskStats.total} tasks complete.{" "}
+                  {taskStats.dueToday > 0
+                    ? `${taskStats.dueToday} task${taskStats.dueToday !== 1 ? "s" : ""} are due today.`
+                    : "None due today."}
+                </p>
+              </div>
+            </div>
+
+            <div style={{ display: "flex", gap: 28, alignItems: "center" }}>
+              <ProgressRing percent={taskStats.progress} size={160} label="Complete" />
+
+              {/* 3 stat boxes */}
+              <div style={{ display: "flex", gap: 12, flex: 1 }}>
+                {[
+                  { label: "Pending", value: taskStats.pending, color: "var(--lh-accent)" },
+                  { label: "Done", value: taskStats.completed, color: "var(--lh-success)" },
+                  { label: "Due today", value: taskStats.dueToday, color: "var(--lh-p-high)" },
+                ].map(({ label, value, color }) => (
+                  <div
+                    key={label}
+                    style={{
+                      flex: 1,
+                      background: "var(--lh-surface-2)",
+                      border: "1px solid var(--lh-border)",
+                      borderRadius: "var(--lh-r-md)",
+                      padding: "14px 12px",
+                      textAlign: "center",
+                    }}
+                  >
+                    <p
+                      style={{
+                        margin: "0 0 4px",
+                        fontFamily: "var(--lh-font-display)",
+                        fontSize: 32,
+                        fontWeight: 500,
+                        color,
+                        lineHeight: 1,
+                        letterSpacing: "-0.02em",
+                      }}
+                    >
+                      {value}
+                    </p>
+                    <p
+                      style={{
+                        margin: 0,
+                        fontSize: 10.5,
+                        fontWeight: 600,
+                        color: "var(--lh-muted-2)",
+                        letterSpacing: "0.06em",
+                        textTransform: "uppercase",
+                      }}
+                    >
+                      {label}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Momentum chart */}
+          <div style={{ ...CARD_STYLE, padding: 22 }}>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                marginBottom: 16,
+              }}
+            >
+              <div>
+                <h2 style={{ margin: 0, fontSize: 15, fontWeight: 600, color: "var(--lh-ink)" }}>
+                  Weekly momentum
+                </h2>
+                <p style={{ margin: "3px 0 0", fontSize: 12.5, color: "var(--lh-muted)" }}>
+                  Tasks completed per day, last 7 days
                 </p>
               </div>
               <span
                 style={{
-                  fontSize: 11.5,
+                  fontSize: 12,
                   fontWeight: 500,
                   color: "var(--lh-accent-ink)",
                   background: "var(--lh-accent-bg)",
@@ -195,90 +257,22 @@ export function DashboardSection({
                   padding: "3px 10px",
                 }}
               >
-                {taskStats.dueToday} due today
+                {weekTotal} this week
               </span>
-            </div>
-
-            <div style={{ display: "flex", gap: 24, alignItems: "center" }}>
-              <ProgressRing percent={taskStats.progress} size={160} label="Complete" />
-
-              <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 16 }}>
-                {[
-                  { label: "Total Tasks", value: taskStats.total, color: "var(--lh-ink)" },
-                  { label: "Completed", value: taskStats.completed, color: "var(--lh-success)" },
-                  { label: "Pending", value: taskStats.pending, color: "var(--lh-accent)" },
-                ].map(({ label, value, color }) => (
-                  <div key={label}>
-                    <div
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "space-between",
-                        marginBottom: 4,
-                      }}
-                    >
-                      <span style={{ fontSize: 12, color: "var(--lh-muted)", fontWeight: 500 }}>
-                        {label}
-                      </span>
-                      <span
-                        style={{
-                          fontFamily: "var(--lh-font-display)",
-                          fontSize: 18,
-                          fontWeight: 500,
-                          color,
-                        }}
-                      >
-                        {value}
-                      </span>
-                    </div>
-                    <div
-                      style={{
-                        height: 4,
-                        background: "var(--lh-surface-3)",
-                        borderRadius: 999,
-                        overflow: "hidden",
-                      }}
-                    >
-                      <div
-                        style={{
-                          height: "100%",
-                          width: `${taskStats.total ? (value / taskStats.total) * 100 : 0}%`,
-                          background: color,
-                          borderRadius: 999,
-                          transition: "width 0.4s ease",
-                        }}
-                      />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* Momentum chart */}
-          <div style={{ ...CARD_STYLE, padding: 20 }}>
-            <div style={{ marginBottom: 16 }}>
-              <h2 style={{ margin: 0, fontSize: 15, fontWeight: 600, color: "var(--lh-ink)" }}>
-                Weekly Momentum
-              </h2>
-              <p style={{ margin: "3px 0 0", fontSize: 12.5, color: "var(--lh-muted)" }}>
-                Tasks completed each day this week
-              </p>
             </div>
             <MomentumChart data={weekData} />
           </div>
         </div>
 
-        {/* Right column */}
+        {/* ── Right column ── */}
         <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-          {/* Streak card */}
           <StreakCard streak={streak} weekDays={streakDays} />
 
-          {/* Today's tasks */}
+          {/* Today's focus */}
           <div style={{ ...CARD_STYLE, overflow: "hidden" }}>
             <div
               style={{
-                padding: "18px 20px 14px",
+                padding: "16px 20px 12px",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "space-between",
@@ -287,16 +281,18 @@ export function DashboardSection({
             >
               <div>
                 <h2 style={{ margin: 0, fontSize: 15, fontWeight: 600, color: "var(--lh-ink)" }}>
-                  Up Next
+                  Today's focus
                 </h2>
                 <p style={{ margin: "2px 0 0", fontSize: 12, color: "var(--lh-muted)" }}>
-                  Your pending tasks
+                  {taskStats.dueToday > 0
+                    ? `${taskStats.dueToday} task${taskStats.dueToday !== 1 ? "s" : ""} due today`
+                    : "Upcoming tasks"}
                 </p>
               </div>
               <button
                 onClick={onNavigateToTasks}
                 style={{
-                  height: 28,
+                  height: 26,
                   padding: "0 10px",
                   background: "transparent",
                   border: "1px solid var(--lh-border-strong)",
@@ -311,13 +307,19 @@ export function DashboardSection({
                 onMouseEnter={(e) => { e.currentTarget.style.background = "var(--lh-surface-2)"; }}
                 onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
               >
-                View all
+                View all →
               </button>
             </div>
 
-            <div style={{ padding: "8px 20px 20px" }}>
+            <div style={{ padding: "8px 20px 16px" }}>
               {todayTasks.length === 0 ? (
-                <div style={{ textAlign: "center", padding: "24px 0", color: "var(--lh-muted-2)" }}>
+                <div
+                  style={{
+                    textAlign: "center",
+                    padding: "24px 0",
+                    color: "var(--lh-muted-2)",
+                  }}
+                >
                   <p style={{ margin: 0, fontSize: 13 }}>No pending tasks.</p>
                   <p style={{ margin: "4px 0 0", fontSize: 11.5 }}>
                     Add tasks to see them here.
@@ -336,34 +338,16 @@ export function DashboardSection({
                         borderBottom: "1px solid var(--lh-border)",
                       }}
                     >
-                      {/* Completion indicator */}
+                      {/* Priority bar */}
                       <div
                         style={{
-                          width: 16,
-                          height: 16,
-                          borderRadius: 4,
-                          border: task.completed
-                            ? "none"
-                            : "1.5px solid var(--lh-border-strong)",
-                          background: task.completed ? "var(--lh-accent)" : "transparent",
+                          width: 3,
+                          height: 28,
+                          borderRadius: 99,
+                          background: PRIORITY_COLOR[task.priority] ?? "var(--lh-border-strong)",
                           flexShrink: 0,
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
                         }}
-                      >
-                        {task.completed && (
-                          <svg width="9" height="7" viewBox="0 0 9 7" fill="none">
-                            <path
-                              d="M1 3.5L3.5 6L8 1"
-                              stroke="white"
-                              strokeWidth="1.5"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                            />
-                          </svg>
-                        )}
-                      </div>
+                      />
 
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <p
@@ -382,27 +366,17 @@ export function DashboardSection({
                         </p>
                         <p style={{ margin: 0, fontSize: 11.5, color: "var(--lh-muted-2)" }}>
                           {task.subject}
+                          {task.dueDate ? ` · due ${task.dueDate}` : ""}
                         </p>
                       </div>
 
                       <span
                         style={{
-                          fontSize: 11,
-                          fontWeight: 500,
-                          color:
-                            task.priority === "high"
-                              ? "var(--lh-p-high)"
-                              : task.priority === "medium"
-                              ? "var(--lh-p-med)"
-                              : "var(--lh-p-low)",
-                          background:
-                            task.priority === "high"
-                              ? "var(--lh-danger-bg)"
-                              : task.priority === "medium"
-                              ? "var(--lh-warning-bg)"
-                              : "#eef0ec",
-                          borderRadius: 999,
-                          padding: "2px 7px",
+                          fontSize: 10.5,
+                          fontWeight: 600,
+                          color: PRIORITY_COLOR[task.priority] ?? "var(--lh-muted)",
+                          letterSpacing: "0.04em",
+                          textTransform: "uppercase",
                           flexShrink: 0,
                         }}
                       >

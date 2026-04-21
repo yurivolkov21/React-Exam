@@ -13,6 +13,12 @@ type AuthScreenProps = {
   onSignupSubmit: (event: FormEvent<HTMLFormElement>) => void;
 };
 
+const STATS = [
+  { value: "4", label: "Focus areas" },
+  { value: "25m", label: "Session blocks" },
+  { value: "∞", label: "Offline first" },
+];
+
 export function AuthScreen({
   authMode,
   authError,
@@ -28,12 +34,12 @@ export function AuthScreen({
         minHeight: "100dvh",
       }}
     >
-      {/* Left: dark hero panel */}
+      {/* ── Left: dark hero panel ── */}
       <div
         style={{
           background: "var(--lh-ink)",
           position: "relative",
-          padding: 44,
+          padding: "44px 48px",
           display: "flex",
           flexDirection: "column",
           justifyContent: "space-between",
@@ -45,23 +51,43 @@ export function AuthScreen({
         <div
           style={{
             position: "absolute",
-            top: -80,
-            right: -80,
-            width: 400,
-            height: 400,
+            top: -100,
+            right: -100,
+            width: 500,
+            height: 500,
             borderRadius: "50%",
-            background: "radial-gradient(circle, rgba(217,119,87,0.28) 0%, transparent 70%)",
+            background: "radial-gradient(circle, rgba(217,119,87,0.22) 0%, transparent 65%)",
+            pointerEvents: "none",
+          }}
+        />
+        <div
+          style={{
+            position: "absolute",
+            bottom: -60,
+            left: -60,
+            width: 320,
+            height: 320,
+            borderRadius: "50%",
+            background: "radial-gradient(circle, rgba(217,119,87,0.10) 0%, transparent 70%)",
             pointerEvents: "none",
           }}
         />
 
         {/* Brand mark */}
-        <div style={{ display: "flex", alignItems: "center", gap: 10, position: "relative", zIndex: 1 }}>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 10,
+            position: "relative",
+            zIndex: 1,
+          }}
+        >
           <div
             style={{
-              width: 32,
-              height: 32,
-              borderRadius: 8,
+              width: 34,
+              height: 34,
+              borderRadius: 9,
               background: "var(--lh-accent)",
               display: "flex",
               alignItems: "center",
@@ -92,58 +118,91 @@ export function AuthScreen({
           <h1
             style={{
               fontFamily: "var(--lh-font-display)",
-              fontSize: "clamp(2rem, 3vw, 3rem)",
+              fontSize: "clamp(2.2rem, 3.2vw, 3.2rem)",
               fontWeight: 500,
               color: "#fbfaf8",
               letterSpacing: "-0.03em",
-              lineHeight: 1.15,
-              margin: "0 0 16px",
+              lineHeight: 1.12,
+              margin: "0 0 20px",
             }}
           >
-            Your personal
+            Show up daily.{" "}
             <br />
-            study companion.
+            Learn{" "}
+            <em
+              style={{
+                fontStyle: "italic",
+                color: "var(--lh-accent)",
+              }}
+            >
+              deliberately.
+            </em>
+            <br />
+            Ship with confidence.
           </h1>
-          <p style={{ margin: 0, fontSize: 14, color: "rgba(251,250,248,0.55)", lineHeight: 1.6, maxWidth: 320 }}>
-            Track your learning journey, manage tasks, take notes, and get AI-powered study support — all in one place.
+
+          <p
+            style={{
+              margin: "0 0 36px",
+              fontSize: 14.5,
+              color: "rgba(251,250,248,0.6)",
+              lineHeight: 1.65,
+              maxWidth: 340,
+            }}
+          >
+            A calm, focused space to plan your study, track what matters, and
+            build a streak that sticks — all frontend, fully local, always yours.
           </p>
 
-          {/* Feature pills */}
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 28 }}>
-            {["Task Kanban", "Streak Tracking", "Smart Notes", "AI Assistant"].map((f) => (
-              <span
-                key={f}
-                style={{
-                  fontSize: 12,
-                  fontWeight: 500,
-                  color: "rgba(251,250,248,0.7)",
-                  background: "rgba(251,250,248,0.07)",
-                  border: "1px solid rgba(251,250,248,0.12)",
-                  borderRadius: 999,
-                  padding: "4px 12px",
-                }}
-              >
-                {f}
-              </span>
+          {/* Stats row */}
+          <div style={{ display: "flex", gap: 32 }}>
+            {STATS.map((stat) => (
+              <div key={stat.label}>
+                <p
+                  style={{
+                    margin: "0 0 2px",
+                    fontFamily: "var(--lh-font-display)",
+                    fontSize: 28,
+                    fontWeight: 500,
+                    color: "#fbfaf8",
+                    letterSpacing: "-0.02em",
+                    lineHeight: 1,
+                  }}
+                >
+                  {stat.value}
+                </p>
+                <p
+                  style={{
+                    margin: 0,
+                    fontSize: 10.5,
+                    fontWeight: 600,
+                    color: "rgba(251,250,248,0.4)",
+                    letterSpacing: "0.08em",
+                    textTransform: "uppercase",
+                  }}
+                >
+                  {stat.label}
+                </p>
+              </div>
             ))}
           </div>
         </div>
 
-        {/* Bottom quote */}
+        {/* Bottom tagline */}
         <p
           style={{
             margin: 0,
             fontSize: 11.5,
-            color: "rgba(251,250,248,0.3)",
+            color: "rgba(251,250,248,0.28)",
             position: "relative",
             zIndex: 1,
           }}
         >
-          "The expert in anything was once a beginner."
+          Frontend-only demo · data saved locally to your browser
         </p>
       </div>
 
-      {/* Right: form panel */}
+      {/* ── Right: form panel ── */}
       <div
         style={{
           background: "var(--lh-bg)",
@@ -155,16 +214,52 @@ export function AuthScreen({
         }}
       >
         <div style={{ width: "100%", maxWidth: 380 }}>
+          {/* Tab switcher */}
+          <div
+            style={{
+              display: "flex",
+              background: "var(--lh-surface-2)",
+              border: "1px solid var(--lh-border)",
+              borderRadius: "var(--lh-r-md)",
+              padding: 3,
+              marginBottom: 28,
+            }}
+          >
+            {(["login", "signup"] as const).map((mode) => (
+              <button
+                key={mode}
+                onClick={() => onSwitchAuthMode(mode)}
+                style={{
+                  flex: 1,
+                  height: 32,
+                  borderRadius: "var(--lh-r-sm)",
+                  border: "none",
+                  background: authMode === mode ? "var(--lh-surface)" : "transparent",
+                  boxShadow: authMode === mode ? "var(--lh-sh-sm)" : "none",
+                  fontSize: 13,
+                  fontWeight: authMode === mode ? 500 : 400,
+                  color: authMode === mode ? "var(--lh-ink)" : "var(--lh-muted)",
+                  cursor: "pointer",
+                  fontFamily: "var(--lh-font-sans)",
+                  transition: "background 0.15s, color 0.15s",
+                }}
+              >
+                {mode === "login" ? "Sign in" : "Create account"}
+              </button>
+            ))}
+          </div>
+
+          {/* Form */}
           {authMode === "login" ? (
-            <LoginForm onSubmit={onLoginSubmit} onSwitchToSignup={() => onSwitchAuthMode("signup")} />
+            <LoginForm onSubmit={onLoginSubmit} />
           ) : (
-            <SignupForm onSubmit={onSignupSubmit} onSwitchToLogin={() => onSwitchAuthMode("login")} />
+            <SignupForm onSubmit={onSignupSubmit} />
           )}
 
-          {authError ? (
+          {authError && (
             <p
               style={{
-                marginTop: 8,
+                marginTop: 10,
                 fontSize: 12,
                 color: "var(--lh-danger)",
                 textAlign: "center",
@@ -172,7 +267,7 @@ export function AuthScreen({
             >
               {authError}
             </p>
-          ) : null}
+          )}
         </div>
       </div>
 

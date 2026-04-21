@@ -13,6 +13,7 @@ import {
 } from "@/features/learning-hub/constants";
 import { getAssistantReply, getId, isAppSection, isValidEmail } from "@/features/learning-hub/helpers";
 import { HydrationShell } from "@/features/learning-hub/hydration-shell";
+import { NewTaskModal } from "@/features/learning-hub/components/new-task-modal";
 import { AssistantSection } from "@/features/learning-hub/sections/assistant-section";
 import { DashboardSection } from "@/features/learning-hub/sections/dashboard-section";
 import { NotesSection } from "@/features/learning-hub/sections/notes-section";
@@ -29,6 +30,7 @@ import type {
   AppSection,
   AssistantMessage,
   AuthMode,
+  KanbanStatus,
   StudyNote,
   StudyTask,
   TaskFilter,
@@ -36,48 +38,54 @@ import type {
   UserProfile,
 } from "@/features/learning-hub/types";
 
+const SECTION_LABELS: Record<AppSection, string> = {
+  dashboard: "Dashboard",
+  tasks: "Tasks",
+  notes: "Notes",
+  assistant: "Assistant",
+};
+
+function getGreeting(): string {
+  const h = new Date().getHours();
+  if (h < 12) return "Good morning";
+  if (h < 17) return "Good afternoon";
+  return "Good evening";
+}
+
 function App() {
   const [authMode, setAuthMode] = useState<AuthMode>("login");
   const [authError, setAuthError] = useState<string>("");
   const [activeSection, setActiveSection] = useState<AppSection>("dashboard");
-  const [currentUser, setCurrentUser] = useState<UserProfile | null>(() =>
-    readStoredUser(),
-  );
+  const [currentUser, setCurrentUser] = useState<UserProfile | null>(() => readStoredUser());
 
   const [tasks, setTasks] = useState<StudyTask[]>(() => {
     const storedUser = readStoredUser();
-    if (!storedUser) {
-      return [];
-    }
-
+    if (!storedUser) return [];
     return readStoredTasks(storedUser.email);
   });
 
   const [notes, setNotes] = useState<StudyNote[]>(() => {
     const storedUser = readStoredUser();
-    if (!storedUser) {
-      return [];
-    }
-
+    if (!storedUser) return [];
     return readStoredNotes(storedUser.email).notes;
   });
 
   const [canPersistNotes, setCanPersistNotes] = useState(() => {
     const storedUser = readStoredUser();
-    if (!storedUser) {
-      return true;
-    }
-
+    if (!storedUser) return true;
     return readStoredNotes(storedUser.email).canPersist;
   });
 
   const [isHydrating, setIsHydrating] = useState(true);
 
+  // Task form state (shared between modal and editing)
   const [titleInput, setTitleInput] = useState("");
   const [subjectInput, setSubjectInput] = useState(SUBJECT_OPTIONS[0]);
   const [priorityInput, setPriorityInput] = useState<TaskPriority>("medium");
   const [dueDateInput, setDueDateInput] = useState("");
+  const [kanbanStatusInput, setKanbanStatusInput] = useState<KanbanStatus>("pending");
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
+  const [showNewTaskModal, setShowNewTaskModal] = useState(false);
 
   const [assistantInput, setAssistantInput] = useState("");
   const [taskFilter, setTaskFilter] = useState<TaskFilter>("all");
@@ -124,58 +132,37 @@ function App() {
     setTaskFilter("all");
     setTaskSearch("");
 
-    const hydrateTimer = window.setTimeout(() => {
-      setIsHydrating(false);
-    }, 220);
-
-    return () => {
-      window.clearTimeout(hydrateTimer);
-    };
+    const hydrateTimer = window.setTimeout(() => setIsHydrating(false), 220);
+    return () => window.clearTimeout(hydrateTimer);
   }, [currentUser]);
 
   useEffect(() => {
-    if (!currentUser) {
-      return;
-    }
-
+    if (!currentUser) return;
     safeSetStorageItem(
       getTaskStorageKey(currentUser.email),
       JSON.stringify(tasks),
-      () => {
-        toast.error("Unable to save tasks to localStorage.");
-      },
+      () => toast.error("Unable to save tasks to localStorage."),
     );
   }, [currentUser, tasks]);
 
   useEffect(() => {
-    if (!currentUser || !canPersistNotes) {
-      return;
-    }
-
+    if (!currentUser || !canPersistNotes) return;
     safeSetStorageItem(
       getNotesStorageKey(currentUser.email),
       JSON.stringify(notes),
-      () => {
-        toast.error("Unable to save notes to localStorage.");
-      },
+      () => toast.error("Unable to save notes to localStorage."),
     );
   }, [canPersistNotes, currentUser, notes]);
 
+  // ── Derived stats ──
   const taskStats = useMemo(() => {
     const total = tasks.length;
-    const completed = tasks.filter((task) => task.completed).length;
+    const completed = tasks.filter((t) => t.completed).length;
     const pending = total - completed;
     const progress = total ? Math.round((completed / total) * 100) : 0;
     const today = new Date().toISOString().slice(0, 10);
-    const dueToday = tasks.filter((task) => task.dueDate === today).length;
-
-    return {
-      total,
-      completed,
-      pending,
-      progress,
-      dueToday,
-    };
+    const dueToday = tasks.filter((t) => t.dueDate === today).length;
+    return { total, completed, pending, progress, dueToday };
   }, [tasks]);
 
   const visibleTasks = useMemo(
@@ -184,53 +171,67 @@ function App() {
   );
 
   const filteredTasks = useMemo(() => {
-    const normalizedQuery = taskSearch.trim().toLowerCase();
-
+    const q = taskSearch.trim().toLowerCase();
     return visibleTasks.filter((task) => {
       const matchesFilter =
-        taskFilter === "all" ||
-        (taskFilter === "done" ? task.completed : !task.completed);
+        taskFilter === "all" || (taskFilter === "done" ? task.completed : !task.completed);
       const matchesSearch =
-        !normalizedQuery ||
-        task.title.toLowerCase().includes(normalizedQuery) ||
-        task.subject.toLowerCase().includes(normalizedQuery);
-
+        !q || task.title.toLowerCase().includes(q) || task.subject.toLowerCase().includes(q);
       return matchesFilter && matchesSearch;
     });
   }, [taskFilter, taskSearch, visibleTasks]);
 
+  const streak = useMemo(() => {
+    const today = new Date();
+    let count = 0;
+    for (let i = 0; i < 30; i++) {
+      const d = new Date(today);
+      d.setDate(today.getDate() - i);
+      const dayStr = d.toISOString().slice(0, 10);
+      const hadActivity = visibleTasks.some(
+        (t) => t.completed && t.updatedAt?.slice(0, 10) === dayStr,
+      );
+      if (hadActivity) {
+        count++;
+      } else if (i > 0) {
+        break;
+      }
+    }
+    return count;
+  }, [visibleTasks]);
+
+  // ── Handlers ──
   const resetTaskForm = () => {
     setTitleInput("");
     setSubjectInput(SUBJECT_OPTIONS[0]);
     setPriorityInput("medium");
     setDueDateInput("");
+    setKanbanStatusInput("pending");
     setEditingTaskId(null);
+  };
+
+  const openNewTaskModal = () => {
+    resetTaskForm();
+    setShowNewTaskModal(true);
+  };
+
+  const closeTaskModal = () => {
+    setShowNewTaskModal(false);
+    resetTaskForm();
   };
 
   const handleLoginSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setAuthError("");
-
     const formData = new FormData(event.currentTarget);
     const email = String(formData.get("email") ?? "").trim().toLowerCase();
     const password = String(formData.get("password") ?? "");
-
-    if (!isValidEmail(email)) {
-      setAuthError("Invalid email address.");
-      return;
-    }
-
+    if (!isValidEmail(email)) { setAuthError("Invalid email address."); return; }
     if (password.length < MIN_PASSWORD_LENGTH) {
       setAuthError(`Password must be at least ${MIN_PASSWORD_LENGTH} characters.`);
       return;
     }
-
-    setCurrentUser({
-      id: getId(),
-      name: email.split("@")[0] || "Learner",
-      email,
-      avatar: "",
-    });
+    setCurrentUser({ id: getId(), name: email.split("@")[0] || "Learner", email, avatar: "" });
     setActiveSection("dashboard");
     toast.success("Signed in successfully.");
   };
@@ -238,39 +239,19 @@ function App() {
   const handleSignupSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setAuthError("");
-
     const formData = new FormData(event.currentTarget);
     const name = String(formData.get("name") ?? "").trim();
     const email = String(formData.get("email") ?? "").trim().toLowerCase();
     const password = String(formData.get("password") ?? "");
     const confirmPassword = String(formData.get("confirmPassword") ?? "");
-
-    if (!name) {
-      setAuthError("Please enter your full name.");
-      return;
-    }
-
-    if (!isValidEmail(email)) {
-      setAuthError("Invalid email address.");
-      return;
-    }
-
+    if (!name) { setAuthError("Please enter your full name."); return; }
+    if (!isValidEmail(email)) { setAuthError("Invalid email address."); return; }
     if (password.length < MIN_PASSWORD_LENGTH) {
       setAuthError(`Password must be at least ${MIN_PASSWORD_LENGTH} characters.`);
       return;
     }
-
-    if (password !== confirmPassword) {
-      setAuthError("Password confirmation does not match.");
-      return;
-    }
-
-    setCurrentUser({
-      id: getId(),
-      name,
-      email,
-      avatar: "",
-    });
+    if (password !== confirmPassword) { setAuthError("Password confirmation does not match."); return; }
+    setCurrentUser({ id: getId(), name, email, avatar: "" });
     setActiveSection("dashboard");
     toast.success("Account created successfully.");
   };
@@ -287,23 +268,18 @@ function App() {
     setAuthMode("login");
     setAuthError("");
     setActiveSection("dashboard");
+    setShowNewTaskModal(false);
     toast.info("Signed out.");
   };
 
   const handleTaskSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-
     const normalizedTitle = titleInput.trim();
-    if (!normalizedTitle) {
-      toast.error("Task title cannot be empty.");
-      return;
-    }
-
+    if (!normalizedTitle) { toast.error("Task title cannot be empty."); return; }
     const now = new Date().toISOString();
-
     if (editingTaskId) {
-      setTasks((previousTasks) =>
-        previousTasks.map((task) =>
+      setTasks((prev) =>
+        prev.map((task) =>
           task.id === editingTaskId
             ? {
                 ...task,
@@ -311,6 +287,8 @@ function App() {
                 subject: subjectInput,
                 priority: priorityInput,
                 dueDate: dueDateInput,
+                kanbanStatus: kanbanStatusInput,
+                completed: kanbanStatusInput === "done",
                 updatedAt: now,
               }
             : task,
@@ -324,36 +302,30 @@ function App() {
         subject: subjectInput,
         priority: priorityInput,
         dueDate: dueDateInput,
-        completed: false,
+        kanbanStatus: kanbanStatusInput,
+        completed: kanbanStatusInput === "done",
         createdAt: now,
         updatedAt: now,
       };
-      setTasks((previousTasks) => [nextTask, ...previousTasks]);
+      setTasks((prev) => [nextTask, ...prev]);
       toast.success("Task added.");
     }
-
-    resetTaskForm();
+    closeTaskModal();
   };
 
   const toggleTask = (taskId: string) => {
-    setTasks((previousTasks) =>
-      previousTasks.map((task) =>
+    setTasks((prev) =>
+      prev.map((task) =>
         task.id === taskId
-          ? {
-              ...task,
-              completed: !task.completed,
-              updatedAt: new Date().toISOString(),
-            }
+          ? { ...task, completed: !task.completed, updatedAt: new Date().toISOString() }
           : task,
       ),
     );
   };
 
   const deleteTask = (taskId: string) => {
-    setTasks((previousTasks) => previousTasks.filter((task) => task.id !== taskId));
-    if (editingTaskId === taskId) {
-      resetTaskForm();
-    }
+    setTasks((prev) => prev.filter((t) => t.id !== taskId));
+    if (editingTaskId === taskId) resetTaskForm();
     toast.info("Task deleted.");
   };
 
@@ -363,85 +335,50 @@ function App() {
     setSubjectInput(task.subject);
     setPriorityInput(task.priority);
     setDueDateInput(task.dueDate);
+    setKanbanStatusInput(task.kanbanStatus ?? (task.completed ? "done" : "pending"));
+    setShowNewTaskModal(true);
   };
 
-  const submitAssistantPrompt = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-
-    const trimmedPrompt = assistantInput.trim();
-    if (!trimmedPrompt) {
-      return;
-    }
-
-    const userMessage: AssistantMessage = {
-      id: getId(),
-      role: "user",
-      content: trimmedPrompt,
-    };
-    const assistantMessage: AssistantMessage = {
-      id: getId(),
-      role: "assistant",
-      content: getAssistantReply(trimmedPrompt),
-    };
-
-    setAssistantMessages((previousMessages) => [
-      ...previousMessages,
-      userMessage,
-      assistantMessage,
-    ]);
-    setAssistantInput("");
-  };
-
-  const createNote = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-
-    const normalizedTitle = noteTitleInput.trim();
-    const normalizedContent = noteContentInput.trim();
-    if (!normalizedTitle || !normalizedContent) {
-      toast.error("A note must have both title and content.");
-      return;
-    }
-
-    const now = new Date().toISOString();
-    const newNote: StudyNote = {
-      id: getId(),
-      title: normalizedTitle,
-      content: normalizedContent,
-      createdAt: now,
-      updatedAt: now,
-    };
-
-    setNotes((previousNotes) => [newNote, ...previousNotes]);
-    setNoteTitleInput("");
-    setNoteContentInput("");
-    toast.success("Note added.");
-  };
-
-  const moveTask = (taskId: string, status: import("@/features/learning-hub/types").KanbanStatus) => {
+  const moveTask = (taskId: string, status: KanbanStatus) => {
     setTasks((prev) =>
       prev.map((task) =>
         task.id === taskId
-          ? {
-              ...task,
-              kanbanStatus: status,
-              completed: status === "done",
-              updatedAt: new Date().toISOString(),
-            }
+          ? { ...task, kanbanStatus: status, completed: status === "done", updatedAt: new Date().toISOString() }
           : task,
       ),
     );
   };
 
+  const submitAssistantPrompt = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const trimmed = assistantInput.trim();
+    if (!trimmed) return;
+    const userMessage: AssistantMessage = { id: getId(), role: "user", content: trimmed };
+    const botMessage: AssistantMessage = { id: getId(), role: "assistant", content: getAssistantReply(trimmed) };
+    setAssistantMessages((prev) => [...prev, userMessage, botMessage]);
+    setAssistantInput("");
+  };
+
+  const createNote = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const title = noteTitleInput.trim();
+    const content = noteContentInput.trim();
+    if (!title || !content) { toast.error("A note must have both title and content."); return; }
+    const now = new Date().toISOString();
+    const newNote: StudyNote = { id: getId(), title, content, createdAt: now, updatedAt: now };
+    setNotes((prev) => [newNote, ...prev]);
+    setNoteTitleInput("");
+    setNoteContentInput("");
+    toast.success("Note added.");
+  };
+
   const deleteNote = (noteId: string) => {
-    setNotes((previousNotes) => previousNotes.filter((note) => note.id !== noteId));
+    setNotes((prev) => prev.filter((n) => n.id !== noteId));
     toast.info("Note deleted.");
   };
 
   const resetCorruptedNotesStorage = () => {
-    if (!currentUser) {
-      return;
-    }
-
+    if (!currentUser) return;
     const seededNotes = NOTES_SEED.map((note) => ({
       id: getId(),
       title: note.title,
@@ -449,7 +386,6 @@ function App() {
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     }));
-
     setNotes(seededNotes);
     setCanPersistNotes(true);
     toast.success("Notes were reset and localStorage writes are enabled again.");
@@ -460,6 +396,7 @@ function App() {
     setAuthError("");
   };
 
+  // ── Auth ──
   if (!currentUser) {
     return (
       <AuthScreen
@@ -477,50 +414,38 @@ function App() {
       <HydrationShell
         activeSection={activeSection}
         currentUser={currentUser}
-        onNavigate={(item) => {
-          if (isAppSection(item)) {
-            setActiveSection(item);
-          }
-        }}
+        onNavigate={(item) => { if (isAppSection(item)) setActiveSection(item); }}
         onLogout={handleLogout}
       />
     );
   }
 
+  // ── Section content ──
   let sectionContent = null;
   if (activeSection === "dashboard") {
     sectionContent = (
       <DashboardSection
         taskStats={taskStats}
         visibleTasks={visibleTasks}
-        currentUserName={currentUser.name}
+        streak={streak}
+        onOpenNewTask={openNewTaskModal}
         onNavigateToTasks={() => setActiveSection("tasks")}
       />
     );
   } else if (activeSection === "tasks") {
     sectionContent = (
       <TasksSection
-        editingTaskId={editingTaskId}
-        titleInput={titleInput}
-        subjectInput={subjectInput}
-        priorityInput={priorityInput}
-        dueDateInput={dueDateInput}
         taskSearch={taskSearch}
         taskFilter={taskFilter}
         visibleTasks={visibleTasks}
         filteredTasks={filteredTasks}
-        onTitleInputChange={setTitleInput}
-        onSubjectInputChange={setSubjectInput}
-        onPriorityInputChange={setPriorityInput}
-        onDueDateInputChange={setDueDateInput}
         onTaskSearchChange={setTaskSearch}
         onTaskFilterChange={setTaskFilter}
-        onSubmitTask={handleTaskSubmit}
-        onCancelEdit={resetTaskForm}
         onStartEditTask={startEditingTask}
         onToggleTask={toggleTask}
         onDeleteTask={deleteTask}
         onMoveTask={moveTask}
+        onOpenNewTask={openNewTaskModal}
       />
     );
   } else if (activeSection === "notes") {
@@ -548,19 +473,19 @@ function App() {
     );
   }
 
+  const greeting = getGreeting();
+
   return (
     <SidebarProvider>
       <AppSidebar
         activeItem={activeSection}
-        onNavigate={(item) => {
-          if (isAppSection(item)) {
-            setActiveSection(item);
-          }
-        }}
+        onNavigate={(item) => { if (isAppSection(item)) setActiveSection(item); }}
         onLogout={handleLogout}
+        pendingCount={taskStats.pending}
         user={currentUser}
       />
       <SidebarInset>
+        {/* ── Topbar ── */}
         <header
           style={{
             height: 56,
@@ -569,79 +494,102 @@ function App() {
             justifyContent: "space-between",
             borderBottom: "1px solid var(--lh-border)",
             background: "var(--lh-surface)",
-            backdropFilter: "blur(8px)",
-            padding: "0 24px",
+            padding: "0 20px 0 16px",
             position: "sticky",
             top: 0,
             zIndex: 10,
-            gap: 16,
+            gap: 12,
           }}
         >
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          {/* Left: trigger + breadcrumb */}
+          <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}>
             <SidebarTrigger />
-            <span
-              style={{
-                width: 1,
-                height: 20,
-                background: "var(--lh-border)",
-                flexShrink: 0,
-              }}
-            />
-            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-              {[
-                { id: "dashboard", label: "Dashboard" },
-                { id: "tasks", label: "Tasks" },
-                { id: "notes", label: "Notes" },
-                { id: "assistant", label: "Assistant" },
-              ].map((section, i) => (
-                <span key={section.id} style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                  {i > 0 && (
-                    <span style={{ color: "var(--lh-muted-2)", fontSize: 12 }}>/</span>
-                  )}
-                  <button
-                    onClick={() => setActiveSection(section.id as import("@/features/learning-hub/types").AppSection)}
-                    style={{
-                      background: "none",
-                      border: "none",
-                      padding: "2px 4px",
-                      fontSize: 13,
-                      fontWeight: section.id === activeSection ? 600 : 400,
-                      color: section.id === activeSection ? "var(--lh-ink)" : "var(--lh-muted)",
-                      cursor: "pointer",
-                      fontFamily: "var(--lh-font-sans)",
-                    }}
-                  >
-                    {section.label}
-                  </button>
-                </span>
-              ))}
-            </div>
+            <span style={{ width: 1, height: 18, background: "var(--lh-border)", flexShrink: 0 }} />
+            <nav style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 13 }}>
+              <span style={{ color: "var(--lh-muted)", whiteSpace: "nowrap" }}>Learning Hub</span>
+              <span style={{ color: "var(--lh-muted-2)" }}>/</span>
+              <span style={{ color: "var(--lh-ink)", fontWeight: 600, whiteSpace: "nowrap" }}>
+                {SECTION_LABELS[activeSection]}
+              </span>
+            </nav>
           </div>
 
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            {taskStats.pending > 0 && (
+          {/* Right: streak + greeting + new task */}
+          <div style={{ display: "flex", alignItems: "center", gap: 12, flexShrink: 0 }}>
+            {streak > 0 && (
               <span
                 style={{
-                  fontSize: 12,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 5,
+                  fontSize: 12.5,
                   fontWeight: 500,
                   color: "var(--lh-accent-ink)",
                   background: "var(--lh-accent-bg)",
                   border: "1px solid var(--lh-accent-border)",
                   borderRadius: 999,
-                  padding: "3px 10px",
+                  padding: "4px 11px",
+                  whiteSpace: "nowrap",
                 }}
               >
-                {taskStats.pending} pending
+                🔥 {streak}-day streak
               </span>
             )}
-            <span style={{ fontSize: 13, color: "var(--lh-muted)" }}>
-              {currentUser.name}
+            <span
+              style={{
+                fontSize: 13,
+                color: "var(--lh-muted)",
+                whiteSpace: "nowrap",
+              }}
+            >
+              {greeting}, {currentUser.name}
             </span>
+            <button
+              onClick={openNewTaskModal}
+              style={{
+                height: 34,
+                padding: "0 14px",
+                background: "var(--lh-accent)",
+                color: "#fff",
+                border: "none",
+                borderRadius: "var(--lh-r-sm)",
+                fontSize: 13,
+                fontWeight: 500,
+                cursor: "pointer",
+                fontFamily: "var(--lh-font-sans)",
+                transition: "background 0.12s",
+                whiteSpace: "nowrap",
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = "var(--lh-accent-ink)"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = "var(--lh-accent)"; }}
+            >
+              + New task
+            </button>
           </div>
         </header>
 
         <main>{sectionContent}</main>
       </SidebarInset>
+
+      {/* ── New task modal ── */}
+      {showNewTaskModal && (
+        <NewTaskModal
+          editingTaskId={editingTaskId}
+          titleInput={titleInput}
+          subjectInput={subjectInput}
+          priorityInput={priorityInput}
+          dueDateInput={dueDateInput}
+          kanbanStatusInput={kanbanStatusInput}
+          onTitleInputChange={setTitleInput}
+          onSubjectInputChange={setSubjectInput}
+          onPriorityInputChange={setPriorityInput}
+          onDueDateInputChange={setDueDateInput}
+          onKanbanStatusInputChange={setKanbanStatusInput}
+          onSubmit={handleTaskSubmit}
+          onClose={closeTaskModal}
+        />
+      )}
+
       <Toaster richColors />
     </SidebarProvider>
   );

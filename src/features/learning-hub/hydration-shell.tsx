@@ -23,6 +23,7 @@ export function HydrationShell({
         activeItem={activeSection}
         onNavigate={onNavigate}
         onLogout={onLogout}
+        pendingCount={0}
         user={currentUser}
       />
       <SidebarInset>
