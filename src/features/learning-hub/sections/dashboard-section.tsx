@@ -16,6 +16,7 @@ type DashboardSectionProps = {
   streak: number;
   onOpenNewTask?: () => void;
   onNavigateToTasks?: () => void;
+  onToggleTask?: (taskId: string) => void;
 };
 
 const CARD_STYLE: React.CSSProperties = {
@@ -45,6 +46,7 @@ export function DashboardSection({
   streak,
   onOpenNewTask,
   onNavigateToTasks,
+  onToggleTask,
 }: DashboardSectionProps) {
   const todayTasks = useMemo(() => {
     const today = new Date().toISOString().slice(0, 10);
@@ -359,7 +361,10 @@ export function DashboardSection({
                         }}
                       />
 
-                      <div
+                      <button
+                        type="button"
+                        onClick={() => onToggleTask?.(task.id)}
+                        aria-label={task.completed ? "Mark pending" : "Mark done"}
                         style={{
                           width: 18,
                           height: 18,
@@ -375,10 +380,12 @@ export function DashboardSection({
                           color: "#fff",
                           fontSize: 12,
                           fontWeight: 700,
+                          cursor: "pointer",
+                          padding: 0,
                         }}
                       >
                         {task.completed ? "✓" : ""}
-                      </div>
+                      </button>
 
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <p

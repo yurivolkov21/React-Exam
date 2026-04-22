@@ -435,6 +435,7 @@ function App() {
         streak={streak}
         onOpenNewTask={openNewTaskModal}
         onNavigateToTasks={() => setActiveSection("tasks")}
+        onToggleTask={toggleTask}
       />
     );
   } else if (activeSection === "tasks") {
